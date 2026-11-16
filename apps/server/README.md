@@ -84,12 +84,14 @@ service → repository → model**.
 ### Install
 
 ```bash
-npm install
+pnpm install
 ```
+
+Run workspace commands from the repository root.
 
 ### Configure
 
-Create a `.env` file in the `backend/` root:
+Create a `.env` file in `apps/server/`:
 
 ```env
 NODE_ENV=development
@@ -111,8 +113,8 @@ CLIENT_URL=http://127.0.0.1:3000
 ### Run
 
 ```bash
-npm run dev     # development, with reload (nodemon)
-npm start       # production
+pnpm --filter ./apps/server dev     # development, with reload (nodemon)
+pnpm --filter ./apps/server start   # production
 ```
 
 The server connects to MongoDB, then listens on `PORT` (default `3000`).
@@ -235,7 +237,8 @@ and admin user management.
 
 Next up:
 
-- Add an automated test suite (`npm test` is still the default placeholder).
+- Add an automated test suite (`pnpm --filter ./apps/server test` is still the
+  default placeholder).
 - Mount and finish the `nonTeachingDays` feature (implemented but not yet wired
   into `app.js`).
 - Continue normalizing response shapes across single vs. list endpoints.
