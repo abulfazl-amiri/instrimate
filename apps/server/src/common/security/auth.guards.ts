@@ -1,15 +1,18 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import type { User } from "@prisma/client";
 import type { Request } from "express";
+import * as z from "zod";
 
 import AppError from "../../utils/error.util.js";
 import { verifyAccessToken } from "../../utils/token.util.js";
-import * as userRepository from "../users/user.repository.js";
+import { PrismaService } from "../../database/prisma.service.js";
 
-type AuthenticatedUser = {
-  email: string;
-};
+export type AuthenticatedUser = Pick<
+  User,
+  "id" | "email" | "name" | "role" | "createdAt" | "updatedAt"
+>;
 
-type AuthenticatedRequest = Request & {
+export type AuthenticatedRequest = Request & {
   user?: AuthenticatedUser;
 };
 
@@ -27,6 +30,8 @@ export class RefreshTokenGuard implements CanActivate {
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
+  constructor(private readonly prisma: PrismaService) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const authorization = request.headers.authorization;
@@ -39,12 +44,38 @@ export class AccessTokenGuard implements CanActivate {
     if (!accessToken) throw new AppError("Token is missing.", 401);
 
     const decoded = verifyAccessToken(accessToken);
-    const currentUser = await userRepository.findById(decoded.sub);
-    if (!currentUser) throw new AppError("User not found", 401);
+    const subject =
+      typeof decoded === "object" && decoded !== null && "sub" in decoded ? decoded.sub : undefined;
+    if (typeof subject !== "string" || !z.uuid().safeParse(subject).success) {
+      throw new AppError("Invalid token, please log in again", 401);
+    }
 
-    request.user = currentUser;
+    const user = await this.prisma.user.findUnique({
+      where: { id: subject },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!user) throw new AppError("User not found", 401);
+
+    request.user = user;
     return true;
   }
 }
 
-export type { AuthenticatedRequest };
+@Injectable()
+export class AdminGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    if (request.user?.role !== "admin") {
+      throw new AppError("You do not have permission", 403);
+    }
+
+    return true;
+  }
+}

@@ -32,7 +32,7 @@ app.use("/api/v1/sessions", sessionRouter);
 
 app.get("/", function (req, res) {
   res.status(200).json({
-    message: "Welcome to Classwise",
+    message: "Welcome to Instrimate",
   });
 });
 

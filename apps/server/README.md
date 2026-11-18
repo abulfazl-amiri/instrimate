@@ -6,8 +6,12 @@ share teaching resources with co-teachers, and hand off courses to other
 teachers through invites — all scoped to their own account.
 
 The backend is under active development. The current focus is hardening the
-foundation (auth, sessions, validation, consistent error handling) before
-expanding the product surface.
+foundation with Auth and Users on NestJS, PostgreSQL, and Prisma before
+migrating the remaining features.
+
+> The running server currently exposes only Auth and Users. The other feature
+> implementations remain in the repository but are not mounted; their API
+> routes return 404 until they are migrated.
 
 ## Features
 
@@ -31,9 +35,9 @@ expanding the product surface.
 
 ## Tech Stack
 
-- **Runtime:** Node.js (ES modules), TypeScript for the NestJS Auth feature
-- **Framework:** NestJS 11 for Auth; Express 5 for the remaining API features
-- **Database:** MongoDB with Mongoose
+- **Runtime:** Node.js (ES modules), TypeScript
+- **Framework:** NestJS 11
+- **Database:** PostgreSQL with Prisma
 - **Cache / token store:** Redis (via ioredis)
 - **Validation:** Zod, express-validator, validator, libphonenumber-js
 - **Auth:** jsonwebtoken, bcrypt, cookie-parser
@@ -44,44 +48,34 @@ expanding the product surface.
 
 ## Architecture
 
-The code is organized by **feature**, not by technical layer. Auth is
-implemented as a NestJS module; the other features remain Express routers for
-now. Both are served by the same process, and existing MongoDB data and
-collections are reused without a data migration.
+The code is organized by **feature**. Auth and Users are NestJS modules backed
+by Prisma. Legacy Express/Mongoose feature sources remain unmounted while they
+are migrated. No MongoDB data is copied; the PostgreSQL schema is created with
+Prisma `db push`, without migration files.
 
 ```text
 backend/
 ├── src/
-│   ├── app.js                 # Legacy Express routes and error handler
 │   ├── app.module.ts          # NestJS application module
-│   ├── server.ts              # DB connection + NestJS server bootstrap
-│   ├── config/                # constants, Redis client
-│   ├── middleware/            # shared auth + validation middleware
-│   ├── utils/                 # error, token, email, query, password, parser helpers
+│   ├── server.ts              # NestJS server bootstrap
+│   ├── database/              # Prisma client/module
+│   ├── common/                # shared guards, validation, error handling
 │   └── features/
-│       ├── auth/              # NestJS REST auth endpoints and services
-│       ├── users/             # /me routes + admin user management
-│       ├── sessions/          # active session listing + revocation
-│       ├── students/          # student CRUD + enrollments view
-│       ├── resources/         # resource CRUD + access sharing (access/)
-│       ├── nonTeachingDays/   # holidays / non-teaching day tracking
-│       └── courses/           # course CRUD, plus nested:
-│           ├── lessons/
-│           ├── timetable/
-│           ├── enrollments/
-│           └── invites/
+│       ├── auth/              # REST auth endpoints and services
+│       └── users/             # /me routes + admin user management
+└── prisma/
+    └── schema.prisma         # PostgreSQL User model
 ```
 
-Auth requests flow through **NestJS controller → guard/validation → service**.
-Non-Auth requests continue through the existing Express routes and middleware.
+Requests flow through **NestJS controller → guard/validation → service →
+Prisma**.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+
-- A running MongoDB instance
-- A running Redis instance
+- Docker Compose (PostgreSQL and Redis)
 
 ### Install
 
@@ -93,14 +87,17 @@ Run workspace commands from the repository root.
 
 ### Configure
 
-Create a `.env` file in `apps/server/`:
+Create `apps/server/.env`:
 
 ```env
 NODE_ENV=development
 PORT=3000
 
-MONGO_URI=your_mongodb_connection_string
-REDIS_URL=redis://127.0.0.1:6379
+POSTGRES_USER=instrimate
+POSTGRES_PASSWORD=instrimate_dev
+POSTGRES_DB=instrimate
+DATABASE_URL=postgresql://instrimate:instrimate_dev@127.0.0.1:5432/instrimate?schema=public
+REDIS_URL=redis://127.0.0.1:6378
 
 JWT_SECRET=your_access_token_secret
 JWT_EXPIRES_IN=15m
@@ -115,12 +112,19 @@ CLIENT_URL=http://127.0.0.1:3000
 ### Run
 
 ```bash
-pnpm --filter ./apps/server dev     # development, with reload
-pnpm --filter ./apps/server build   # compile TypeScript to dist/
-pnpm --filter ./apps/server start   # run the compiled server
+docker compose --env-file apps/server/.env up -d
+pnpm --filter ./apps/server db:push
+pnpm --filter ./apps/server dev
 ```
 
-The server connects to MongoDB, then listens on `PORT` (default `3000`).
+For production, build first and then start:
+
+```bash
+pnpm --filter ./apps/server build
+pnpm --filter ./apps/server start
+```
+
+The server connects to PostgreSQL, then listens on `PORT` (default `3000`).
 
 ## API Overview
 
@@ -128,8 +132,8 @@ All routes are versioned under `/api/v1`.
 
 ### Auth — `/api/v1/auth`
 
-Auth is implemented as NestJS REST endpoints. Existing MongoDB data, session
-services, Redis keys, JWT behavior, and cookie contract are retained.
+Auth is implemented as NestJS REST endpoints. Refresh sessions and reset/sudo
+tokens remain in Redis; user records are stored in PostgreSQL.
 
 ```http
 POST /signup
@@ -141,7 +145,7 @@ POST /password/reset
 POST /confirm-password        # auth required — issues a sudo token
 ```
 
-### Users — `/api/v1/users`  _(auth required)_
+### Users — `/api/v1/users` _(auth required)_
 
 ```http
 GET    /me
@@ -156,99 +160,30 @@ DELETE /:id                   # admin only
 PATCH  /:id/role              # admin only
 ```
 
-### Sessions — `/api/v1/sessions`  _(auth required)_
+New signups have the `teacher` role. For local development, promote an initial
+user through Prisma Studio (`pnpm --filter ./apps/server exec prisma studio`)
+before using admin-only endpoints.
 
-```http
-GET    /                      # list active sessions
-DELETE /                      # revoke all sessions (sudo required)
-GET    /:id
-DELETE /:id                   # revoke one session (sudo required)
-```
-
-### Courses — `/api/v1/courses`  _(auth required)_
-
-```http
-GET    /
-POST   /
-GET    /:id
-PATCH  /:id
-DELETE /:id                   # owner only
-GET    /:id/teachers
-
-# nested resources
-/:courseId/timetable          # GET, POST, PATCH
-/:courseId/lessons            # GET, POST, GET/PATCH/DELETE :id
-/:courseId/enrollments        # GET, POST, GET/PATCH/DELETE :id
-/:courseId/invites            # POST  (owner only)
-```
-
-### Invites — `/api/v1/invites`  _(auth required)_
-
-```http
-GET    /                      # invites addressed to the current teacher
-POST   /:id/accept
-POST   /:id/reject
-```
-
-### Students — `/api/v1/students`  _(auth required)_
-
-```http
-GET    /
-POST   /
-GET    /:id
-PATCH  /:id
-DELETE /:id
-GET    /:id/enrollments
-```
-
-### Resources — `/api/v1/resources`  _(auth required)_
-
-```http
-GET    /
-POST   /
-GET    /recent                # alias: recently created resources
-GET    /:id
-PATCH  /:id
-DELETE /:id
-
-# access sharing
-/:resourceId/access           # GET (list), POST (grant)
-/:resourceId/access/:teacherId  # DELETE (revoke)
-```
-
-### List query options
-
-List endpoints support:
-
-```http
-?sort=-createdAt,name
-?fields=name,subject,fee
-?page=2&limit=10
-?fee[gte]=100
-```
+Sessions, courses, invites, students, resources, and non-teaching days are
+legacy features and are not currently mounted.
 
 ## Error Handling
 
-A shared `AppError` class marks expected (operational) errors. The global error
-handler in `app.js` normalizes Mongoose validation errors, duplicate-key
-conflicts, and JWT errors into consistent status codes and messages. In
-development it includes error codes, details, and stack traces; in production it
-returns a generic message for unexpected errors and logs the rest.
+A shared `AppError` class marks expected errors. The NestJS exception filter
+normalizes validation, Prisma uniqueness, and JWT errors. In development it
+includes details and stack traces; in production unexpected errors return a
+generic message and are logged.
 
 ## Status & Roadmap
 
-Working today: auth, sessions, sudo confirmation, courses with nested
-lessons/timetable/enrollments/invites, students, resources with access sharing,
-and admin user management.
+Working today: Auth (signup/signin, refresh, password recovery, sudo
+confirmation) and Users (self-service and admin endpoints), backed by
+PostgreSQL/Prisma and Redis.
 
 Next up:
 
-- Add an automated test suite (`pnpm --filter ./apps/server test` is still the
-  default placeholder).
-- Mount and finish the `nonTeachingDays` feature (implemented but not yet wired
-  into `app.js`).
-- Continue normalizing response shapes across single vs. list endpoints.
-- Add token/session cleanup (TTL) for expired refresh and reset tokens.
+- Migrate the remaining legacy feature APIs from Mongoose to Prisma.
+- Add automated tests when requested.
 
 > For the detailed running state, open issues, and next steps, see
 > [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md).

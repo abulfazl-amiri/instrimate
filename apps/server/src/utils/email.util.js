@@ -10,7 +10,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  */
 const sendEmail = async function ({ to, subject, message }) {
   return await resend.emails.send({
-    from: "Classwise <onboarding@resend.dev>",
+    from: "Instrimate <onboarding@resend.dev>",
     to: to,
     subject: subject,
     text: message,

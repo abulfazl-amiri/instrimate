@@ -6,18 +6,16 @@ import {
   Post,
   Req,
   Res,
-  UseFilters,
   UseGuards,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
 
 import { parseToMs } from "../../utils/parser.util.js";
-import { AuthExceptionFilter } from "./auth-exception.filter.js";
 import {
   AccessTokenGuard,
   RefreshTokenGuard,
   type AuthenticatedRequest,
-} from "./auth.guards.js";
+} from "../../common/security/auth.guards.js";
 import {
   confirmPasswordSchema,
   forgotPasswordSchema,
@@ -31,7 +29,7 @@ import {
   type SignupInput,
 } from "./auth.schema.js";
 import { AuthService } from "./auth.service.js";
-import { ZodValidationPipe } from "./zod-validation.pipe.js";
+import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
 
 const cookieOptions = {
   httpOnly: true,
@@ -44,7 +42,6 @@ type CookieRequest = Request & {
 };
 
 @Controller("api/v1/auth")
-@UseFilters(AuthExceptionFilter)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

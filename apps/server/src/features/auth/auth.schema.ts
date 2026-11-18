@@ -17,7 +17,9 @@ const passwordField = requiredString().min(8, {
 export const signupSchema = z.object({
   email: emailField,
   password: passwordField,
-  name: requiredString(),
+  name: requiredString().trim().max(50, {
+    error: "Name can't be more than 50 chars",
+  }),
 });
 
 export const signinSchema = z.object({
