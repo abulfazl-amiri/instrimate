@@ -1,18 +1,37 @@
-services:
-  mongodb:
-    image: mongo:8
+services:       
+  postgres:
+    image: postgres:16-alpine   
+    restart: unless-stopped     
+    environment:
+      # ${NAME:?msg} = take NAME from .env. If it is missing, STOP and show "msg".
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
     ports:
-      - "27017:27017"
+      # Format: "HOST_IP:HOST_PORT:CONTAINER_PORT"
+      - "127.0.0.1:5432:5432"
     volumes:
-      - mongodb_data:/data/db
+      - postgres_data:/var/lib/postgresql/data   
+    healthcheck:               
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s             
+      timeout: 3s               
+      retries: 10              
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]   # save every change to disk (remove if Redis is only a cache)
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6378:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]   # Redis answers "PONG" when ready
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-volumes:
-  mongodb_data:
+volumes:                        
+  postgres_data:
   redis_data:

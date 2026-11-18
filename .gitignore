@@ -1,12 +1,22 @@
+# Dependencies
 node_modules/
-.codex
 
-# Local editor / machine files
+# Secrets (keep the examples)
+.env
+.env.*
+!.env.example
+
+# Build and test output
+dist/
+coverage/
+*.log
+
+# Editor / machine files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Tool folders
 .codex
 .sixth
-
-
