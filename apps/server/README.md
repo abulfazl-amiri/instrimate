@@ -1,9 +1,9 @@
-# Classwise API
+# Instrimate API
 
-Classwise is a REST API that helps teachers run their teaching business from one
-place. A teacher can manage courses, schedule lessons and timetables, enroll and
-track students, share teaching resources with co-teachers, and hand off courses
-to other teachers through invites — all scoped to their own account.
+Instrimate helps teachers run their teaching business from one place. A teacher
+can manage courses, schedule lessons and timetables, enroll and track students,
+share teaching resources with co-teachers, and hand off courses to other
+teachers through invites — all scoped to their own account.
 
 The backend is under active development. The current focus is hardening the
 foundation (auth, sessions, validation, consistent error handling) before
@@ -31,8 +31,8 @@ expanding the product surface.
 
 ## Tech Stack
 
-- **Runtime:** Node.js (ES modules)
-- **Framework:** Express 5
+- **Runtime:** Node.js (ES modules), TypeScript for the NestJS Auth feature
+- **Framework:** NestJS 11 for Auth; Express 5 for the remaining API features
 - **Database:** MongoDB with Mongoose
 - **Cache / token store:** Redis (via ioredis)
 - **Validation:** Zod, express-validator, validator, libphonenumber-js
@@ -44,20 +44,22 @@ expanding the product surface.
 
 ## Architecture
 
-The code is organized by **feature**, not by technical layer. Each feature owns
-its routes, controller, service, repository, model, and schema, which keeps
-related logic together and makes features easy to find and extend.
+The code is organized by **feature**, not by technical layer. Auth is
+implemented as a NestJS module; the other features remain Express routers for
+now. Both are served by the same process, and existing MongoDB data and
+collections are reused without a data migration.
 
 ```text
 backend/
 ├── src/
-│   ├── app.js                 # Express app, middleware, route mounting, error handler
-│   ├── server.js              # DB connection + server bootstrap
+│   ├── app.js                 # Legacy Express routes and error handler
+│   ├── app.module.ts          # NestJS application module
+│   ├── server.ts              # DB connection + NestJS server bootstrap
 │   ├── config/                # constants, Redis client
 │   ├── middleware/            # shared auth + validation middleware
 │   ├── utils/                 # error, token, email, query, password, parser helpers
 │   └── features/
-│       ├── auth/              # signup, signin, refresh, password reset, sudo token
+│       ├── auth/              # NestJS REST auth endpoints and services
 │       ├── users/             # /me routes + admin user management
 │       ├── sessions/          # active session listing + revocation
 │       ├── students/          # student CRUD + enrollments view
@@ -70,14 +72,14 @@ backend/
 │           └── invites/
 ```
 
-A typical request flows **route → middleware (auth/validation) → controller →
-service → repository → model**.
+Auth requests flow through **NestJS controller → guard/validation → service**.
+Non-Auth requests continue through the existing Express routes and middleware.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - A running MongoDB instance
 - A running Redis instance
 
@@ -113,8 +115,9 @@ CLIENT_URL=http://127.0.0.1:3000
 ### Run
 
 ```bash
-pnpm --filter ./apps/server dev     # development, with reload (nodemon)
-pnpm --filter ./apps/server start   # production
+pnpm --filter ./apps/server dev     # development, with reload
+pnpm --filter ./apps/server build   # compile TypeScript to dist/
+pnpm --filter ./apps/server start   # run the compiled server
 ```
 
 The server connects to MongoDB, then listens on `PORT` (default `3000`).
@@ -124,6 +127,9 @@ The server connects to MongoDB, then listens on `PORT` (default `3000`).
 All routes are versioned under `/api/v1`.
 
 ### Auth — `/api/v1/auth`
+
+Auth is implemented as NestJS REST endpoints. Existing MongoDB data, session
+services, Redis keys, JWT behavior, and cookie contract are retained.
 
 ```http
 POST /signup

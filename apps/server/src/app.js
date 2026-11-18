@@ -5,7 +5,6 @@ import cookieParser from "cookie-parser";
 import courseRouter from "./features/courses/course.routes.js";
 import resourceRouter from "./features/resources/resource.routes.js";
 import userRouter from "./features/users/user.routes.js";
-import authRouter from "./features/auth/auth.routes.js";
 import sessionRouter from "./features/sessions/session.routes.js";
 import inviteRouter from "./features/courses/invites/routes/invite.routes.js";
 import studentRouter from "./features/students/student.routes.js";
@@ -28,7 +27,6 @@ app.use("/api/v1/students", studentRouter);
 app.use("/api/v1/courses", courseRouter);
 app.use("/api/v1/invites", inviteRouter);
 app.use("/api/v1/resources", resourceRouter);
-app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/sessions", sessionRouter);
 

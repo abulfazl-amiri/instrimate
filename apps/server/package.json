@@ -5,13 +5,17 @@
   "license": "ISC",
   "author": "Abulfazl Amiri",
   "type": "module",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon --env-file=.env ./src/server.js",
-    "start": "node src/server.js",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
@@ -23,15 +27,22 @@
     "mongoose": "^9.6.1",
     "morgan": "^1.10.1",
     "nodemailer": "^9.0.3",
+    "reflect-metadata": "^0.2.2",
     "resend": "^6.12.4",
+    "rxjs": "^7.8.2",
     "validator": "^13.15.35",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@eslint/json": "^2.0.0",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.30",
     "eslint": "^10.4.1",
     "globals": "^17.6.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }
