@@ -5,33 +5,17 @@ can manage courses, schedule lessons and timetables, enroll and track students,
 share teaching resources with co-teachers, and hand off courses to other
 teachers through invites — all scoped to their own account.
 
-The backend is under active development. The current focus is hardening the
-foundation with Auth and Users on NestJS, PostgreSQL, and Prisma before
-migrating the remaining features.
+The backend is under active development. The current focus is a clean
+NestJS, PostgreSQL, and Prisma foundation for Auth and Users.
 
-> The running server currently exposes only Auth and Users. The other feature
-> implementations remain in the repository but are not mounted; their API
-> routes return 404 until they are migrated.
+> The running server currently exposes only Auth and Users. The former legacy
+> feature implementations and their API routes have been removed.
 
 ## Features
 
-- **Authentication** — signup/signin with JWT access tokens and rotating,
-  server-tracked refresh tokens stored in an HTTP-only cookie.
-- **Sessions** — list active sessions and revoke them individually or all at
-  once. Sensitive actions are protected by a short-lived "sudo" confirmation
-  token (re-enter password to unlock).
-- **Password recovery** — forgot/reset password flow with email delivery.
-- **Courses** — full CRUD, plus nested management of:
-  - **Lessons** — per-course lesson records.
-  - **Timetable** — the recurring weekly schedule for a course.
-  - **Enrollments** — students enrolled in a course.
-  - **Invites** — invite another teacher to co-teach or take over a course.
-- **Students** — CRUD for a teacher's students and a view of their enrollments.
-- **Resources** — CRUD for teaching materials, with per-teacher **access
-  sharing** so resources can be granted to or revoked from other teachers.
-- **Users** — self-service `/me` routes plus admin-only user management.
-- **List controls** — filtering, sorting, field selection, and pagination on
-  list endpoints via a shared query utility.
+The running application currently includes Auth and Users. The compact
+[feature map](./FEATURES.md) summarizes their workflows and records the
+relationships from the removed features.
 
 ## Tech Stack
 
@@ -39,19 +23,18 @@ migrating the remaining features.
 - **Framework:** NestJS 11
 - **Database:** PostgreSQL with Prisma
 - **Cache / token store:** Redis (via ioredis)
-- **Validation:** Zod, express-validator, validator, libphonenumber-js
+- **Validation:** Zod
 - **Auth:** jsonwebtoken, bcrypt, cookie-parser
-- **Email:** Resend (with nodemailer available)
-- **Logging:** Morgan
+- **Email:** Resend
 - **Config:** dotenv
 - **Tooling:** ESLint, Prettier
 
 ## Architecture
 
 The code is organized by **feature**. Auth and Users are NestJS modules backed
-by Prisma. Legacy Express/Mongoose feature sources remain unmounted while they
-are migrated. No MongoDB data is copied; the PostgreSQL schema is created with
-Prisma `db push`, without migration files.
+by Prisma. The former Express/Mongoose feature modules were removed; no
+MongoDB data is copied. The PostgreSQL schema is created with Prisma `db push`,
+without migration files.
 
 ```text
 backend/
@@ -164,8 +147,10 @@ New signups have the `teacher` role. For local development, promote an initial
 user through Prisma Studio (`pnpm --filter ./apps/server exec prisma studio`)
 before using admin-only endpoints.
 
-Sessions, courses, invites, students, resources, and non-teaching days are
-legacy features and are not currently mounted.
+Legacy session-management endpoints and the courses, lessons, timetables,
+enrollments, invites, students, resources, resource access, and non-teaching
+day features have been removed. Auth still uses Redis-backed refresh sessions
+for signup, signin, refresh, and logout.
 
 ## Error Handling
 
@@ -180,13 +165,11 @@ Working today: Auth (signup/signin, refresh, password recovery, sudo
 confirmation) and Users (self-service and admin endpoints), backed by
 PostgreSQL/Prisma and Redis.
 
-Next up:
+Future features should be selected before being reintroduced as NestJS/Prisma
+modules.
 
-- Migrate the remaining legacy feature APIs from Mongoose to Prisma.
-- Add automated tests when requested.
-
-> For the detailed running state, open issues, and next steps, see
-> [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md).
+> For the current feature workflows and migration boundary, see
+> [`FEATURES.md`](./FEATURES.md).
 
 ## Author
 

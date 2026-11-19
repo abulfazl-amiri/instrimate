@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 
-import * as sessionService from "../sessions/session.service.js";
+import * as sessionService from "./session.service.js";
 import redis from "../../config/redis.js";
 import AppError from "../../utils/error.util.js";
 import {

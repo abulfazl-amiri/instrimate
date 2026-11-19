@@ -4,7 +4,7 @@ import * as z from "zod";
 
 import AppError from "../../utils/error.util.js";
 import * as passwordUtils from "../../utils/password.util.js";
-import * as sessionService from "../sessions/session.service.js";
+import * as sessionService from "../auth/session.service.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type {
   ChangePasswordInput,
