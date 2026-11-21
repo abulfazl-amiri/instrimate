@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
 import type { Request, Response } from "express";
 
 import { parseToMs } from "../../utils/parser.util.js";
@@ -41,7 +32,7 @@ type CookieRequest = Request & {
   cookies?: Record<string, string | undefined>;
 };
 
-@Controller("api/v1/auth")
+@Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -90,10 +81,7 @@ export class AuthController {
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
-  async refresh(
-    @Req() request: CookieRequest,
-    @Res({ passthrough: true }) response: Response,
-  ) {
+  async refresh(@Req() request: CookieRequest, @Res({ passthrough: true }) response: Response) {
     const tokens = await this.authService.refresh(request.cookies!.refreshToken!, {
       ip: request.ip,
       userAgent: request.get("user-agent"),
@@ -104,7 +92,9 @@ export class AuthController {
 
   @Post("password/forgot")
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordInput) {
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordInput,
+  ) {
     await this.authService.forgotPassword(body);
     return { message: "Check your inbox for a reset link" };
   }
