@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import type { Response } from "express";
 
-import AppError, { generateErrorCode } from "../../utils/error.util.js";
+import AppError, { generateErrorCode } from "../errors/app-error.js";
 
 type MappedError = {
   statusCode: number;

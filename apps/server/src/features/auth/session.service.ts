@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import crypto from "node:crypto";
 
-import { RedisService } from "../../redis/redis.service.js";
-import * as tokenUtils from "../../utils/token.util.js";
-import { parseToSec } from "../../utils/parser.util.js";
+import { RedisService } from "../../infrastructure/redis/redis.service.js";
+import * as tokenUtils from "../../common/security/token.util.js";
+import { parseToSec } from "../../common/utils/duration.util.js";
 
 type CreateSessionInput = {
   userId: string;

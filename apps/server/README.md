@@ -37,17 +37,15 @@ MongoDB data is copied. The PostgreSQL schema is created with Prisma `db push`,
 without migration files.
 
 ```text
-backend/
+apps/server/
 ├── src/
-│   ├── app.module.ts          # NestJS application module
-│   ├── server.ts              # NestJS server bootstrap
+│   ├── main.ts                # NestJS server bootstrap
 │   ├── database/              # Prisma client/module
-│   ├── common/                # shared guards, validation, error handling
-│   └── features/
-│       ├── auth/              # REST auth endpoints and services
-│       └── users/             # /me routes + admin user management
+│   ├── common/                # shared errors, security, validation, helpers
+│   ├── infrastructure/        # email and Redis integrations
+│   └── features/              # Auth and Users modules
 └── prisma/
-    └── schema.prisma         # PostgreSQL User model
+    └── schema.prisma          # PostgreSQL User model
 ```
 
 Requests flow through **NestJS controller → guard/validation → service →

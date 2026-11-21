@@ -8,7 +8,7 @@ import AppModule from "./app.module.js";
 import { ApiExceptionFilter } from "./common/filters/api-exception.filter.js";
 import { VersioningType } from "@nestjs/common";
 
-const bootstrap = async function () {
+async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
   app.useGlobalFilters(new ApiExceptionFilter());
@@ -24,6 +24,6 @@ const bootstrap = async function () {
   const host = process.env.HOST || "0.0.0.0";
   await app.listen(port, host);
   console.log(`Server is running on port ${port}`);
-};
+}
 
 void bootstrap();

@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
 import type { Request, Response } from "express";
 
-import { parseToMs } from "../../utils/parser.util.js";
+import { parseToMs } from "../../common/utils/duration.util.js";
 import {
   AccessTokenGuard,
   RefreshTokenGuard,

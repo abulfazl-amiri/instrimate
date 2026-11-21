@@ -5,9 +5,11 @@ import { AuthService } from "./auth.service.js";
 import { UsersModule } from "../users/users.module.js";
 import { SecurityModule } from "../../common/security/security.module.js";
 import { SessionModule } from "./session.module.js";
+import { EmailModule } from "../../infrastructure/email/email.module.js";
+import { RedisModule } from "../../infrastructure/redis/redis.module.js";
 
 @Module({
-  imports: [UsersModule, SecurityModule, SessionModule],
+  imports: [UsersModule, SecurityModule, SessionModule, EmailModule, RedisModule],
   controllers: [AuthController],
   providers: [AuthService],
 })

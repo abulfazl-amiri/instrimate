@@ -1,13 +1,13 @@
 import { Injectable } from "@nestjs/common";
-import { RedisService } from "../../redis/redis.service.js";
-import AppError from "../../utils/error.util.js";
+import { RedisService } from "../../infrastructure/redis/redis.service.js";
+import AppError from "../../common/errors/app-error.js";
 import {
   generateResetToken,
   generateSudoToken,
   hashToken,
-} from "../../utils/token.util.js";
-import { sendEmail } from "../../utils/email.util.js";
-import { parseToSec } from "../../utils/parser.util.js";
+} from "../../common/security/token.util.js";
+import { EmailService } from "../../infrastructure/email/email.service.js";
+import { parseToSec } from "../../common/utils/duration.util.js";
 import { UsersService } from "../users/users.service.js";
 import { SessionService } from "./session.service.js";
 import type {
@@ -29,6 +29,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly sessionService: SessionService,
     private readonly redis: RedisService,
+    private readonly email: EmailService,
   ) {}
 
   async signup(input: SignupInput, metadata: ClientMetadata) {
@@ -77,7 +78,7 @@ export class AuthService {
     const key = `reset:${hashToken(resetToken)}`;
     await this.redis.set(key, user.id.toString(), parseToSec(process.env.RESET_TOKEN_EXPIRES_IN!));
 
-    await sendEmail({
+    await this.email.sendEmail({
       to: user.email,
       subject: "Reset password",
       message:

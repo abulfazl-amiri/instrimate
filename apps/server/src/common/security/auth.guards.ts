@@ -3,8 +3,8 @@ import type { User } from "@prisma/client";
 import type { Request } from "express";
 import * as z from "zod";
 
-import AppError from "../../utils/error.util.js";
-import { verifyAccessToken } from "../../utils/token.util.js";
+import AppError from "../errors/app-error.js";
+import { verifyAccessToken } from "./token.util.js";
 import { PrismaService } from "../../database/prisma.service.js";
 
 export type AuthenticatedUser = Pick<

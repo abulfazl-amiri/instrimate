@@ -1,4 +1,4 @@
-export const generateErrorCode = function (statusCode: number): string {
+export function generateErrorCode(statusCode: number): string {
   switch (statusCode) {
     case 400:
       return "BAD_REQUEST";
@@ -19,14 +19,8 @@ export const generateErrorCode = function (statusCode: number): string {
     default:
       return "SERVER_ERROR";
   }
-};
+}
 
-/**
- * App-level error used by controllers and middleware.
- *
- * `statusCode` controls the HTTP response code.
- * `status` is derived for API responses:
- */
 class AppError extends Error {
   readonly statusCode: number;
   readonly errorCode: string;

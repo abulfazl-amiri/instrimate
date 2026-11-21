@@ -2,8 +2,8 @@ import { Injectable } from "@nestjs/common";
 import type { Prisma, User } from "@prisma/client";
 import * as z from "zod";
 
-import AppError from "../../utils/error.util.js";
-import * as passwordUtils from "../../utils/password.util.js";
+import AppError from "../../common/errors/app-error.js";
+import * as passwordUtils from "./password.util.js";
 import { SessionService } from "../auth/session.service.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type {
