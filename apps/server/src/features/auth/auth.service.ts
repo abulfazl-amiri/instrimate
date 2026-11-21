@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
-
-import * as sessionService from "./session.service.js";
-import redis from "../../config/redis.js";
+import { RedisService } from "../../redis/redis.service.js";
 import AppError from "../../utils/error.util.js";
 import {
   generateResetToken,
@@ -11,6 +9,7 @@ import {
 import { sendEmail } from "../../utils/email.util.js";
 import { parseToSec } from "../../utils/parser.util.js";
 import { UsersService } from "../users/users.service.js";
+import { SessionService } from "./session.service.js";
 import type {
   ConfirmPasswordInput,
   ForgotPasswordInput,
@@ -26,11 +25,15 @@ type ClientMetadata = {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly sessionService: SessionService,
+    private readonly redis: RedisService,
+  ) {}
 
   async signup(input: SignupInput, metadata: ClientMetadata) {
     const user = await this.usersService.createUser(input);
-    return sessionService.createSession({
+    return this.sessionService.createSession({
       userId: user.id,
       ip: metadata.ip,
       userAgent: metadata.userAgent,
@@ -41,7 +44,7 @@ export class AuthService {
     const user = await this.usersService.verifyPassword(input.email, input.password);
     if (!user) throw new AppError("Email or password was incorrect", 401);
 
-    return sessionService.createSession({
+    return this.sessionService.createSession({
       userId: user.id,
       ip: metadata.ip,
       userAgent: metadata.userAgent,
@@ -49,13 +52,13 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string, metadata: ClientMetadata) {
-    const session = await sessionService.validateSession(refreshToken);
+    const session = await this.sessionService.validateSession(refreshToken);
     if (!session) throw new AppError("Invalid or expired session", 401);
 
     const user = await this.usersService.getById(session.userId);
 
-    await sessionService.deleteSession(refreshToken);
-    return sessionService.createSession({
+    await this.sessionService.deleteSession(refreshToken);
+    return this.sessionService.createSession({
       userId: user.id,
       ip: metadata.ip,
       userAgent: metadata.userAgent,
@@ -63,7 +66,7 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
-    await sessionService.deleteSession(refreshToken);
+    await this.sessionService.deleteSession(refreshToken);
   }
 
   async forgotPassword(input: ForgotPasswordInput) {
@@ -72,12 +75,7 @@ export class AuthService {
 
     const resetToken = generateResetToken();
     const key = `reset:${hashToken(resetToken)}`;
-    await redis.set(
-      key,
-      user.id.toString(),
-      "EX",
-      parseToSec(process.env.RESET_TOKEN_EXPIRES_IN),
-    );
+    await this.redis.set(key, user.id.toString(), parseToSec(process.env.RESET_TOKEN_EXPIRES_IN!));
 
     await sendEmail({
       to: user.email,
@@ -91,14 +89,14 @@ export class AuthService {
 
   async resetPassword(input: ResetPasswordInput) {
     const key = `reset:${hashToken(input.resetToken)}`;
-    const userId = await redis.get(key);
+    const userId = await this.redis.get(key);
     if (!userId) throw new AppError("Invalid or expired reset token", 401);
 
-    await redis.del(key);
+    await this.redis.del(key);
 
     const user = await this.usersService.getById(userId);
     await this.usersService.resetPassword(user.id, input.newPassword);
-    await sessionService.revokeAll(user.id);
+    await this.sessionService.revokeAll(user.id);
   }
 
   async confirmPassword(input: ConfirmPasswordInput, email: string) {
@@ -107,12 +105,7 @@ export class AuthService {
 
     const sudoToken = generateSudoToken();
     const sudoKey = `sudo:${hashToken(sudoToken)}`;
-    await redis.set(
-      sudoKey,
-      user.id,
-      "EX",
-      parseToSec(process.env.SUDO_TOKEN_EXPIRES_IN),
-    );
+    await this.redis.set(sudoKey, user.id, parseToSec(process.env.SUDO_TOKEN_EXPIRES_IN!));
     return sudoToken;
   }
 }

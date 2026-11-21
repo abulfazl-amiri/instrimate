@@ -1,4 +1,4 @@
-export const generateErrorCode = function (statusCode) {
+export const generateErrorCode = function (statusCode: number): string {
   switch (statusCode) {
     case 400:
       return "BAD_REQUEST";
@@ -28,14 +28,18 @@ export const generateErrorCode = function (statusCode) {
  * `status` is derived for API responses:
  */
 class AppError extends Error {
-  constructor(message, code, details) {
-    super(message);
+  readonly statusCode: number;
+  readonly errorCode: string;
+  readonly details: unknown;
+  readonly isOperational = true;
 
+  constructor(message: string, code: number, details?: unknown) {
+    super(message);
+    this.name = "AppError";
     this.statusCode = code;
     this.errorCode = generateErrorCode(code);
     this.details = details;
-    // all errors thrown manually by us get this field
-    this.isOperational = true;
   }
 }
+
 export default AppError;

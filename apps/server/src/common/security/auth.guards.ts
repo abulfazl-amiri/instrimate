@@ -37,15 +37,14 @@ export class AccessTokenGuard implements CanActivate {
     const authorization = request.headers.authorization;
     if (!authorization) throw new AppError("Authorization header is missing", 401);
 
-    const [scheme, accessToken] = authorization.split(" ");
-    if (authorization.split(" ").length !== 2 || !scheme) {
+    const [scheme, accessToken, ...extra] = authorization.trim().split(/\s+/);
+    if (scheme?.toLowerCase() !== "bearer" || extra.length > 0) {
       throw new AppError("Malformed token is provided", 401);
     }
     if (!accessToken) throw new AppError("Token is missing.", 401);
 
     const decoded = verifyAccessToken(accessToken);
-    const subject =
-      typeof decoded === "object" && decoded !== null && "sub" in decoded ? decoded.sub : undefined;
+    const subject = typeof decoded === "string" ? undefined : decoded.sub;
     if (typeof subject !== "string" || !z.uuid().safeParse(subject).success) {
       throw new AppError("Invalid token, please log in again", 401);
     }

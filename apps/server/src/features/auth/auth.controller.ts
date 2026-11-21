@@ -127,14 +127,14 @@ export class AuthController {
     const sudoToken = await this.authService.confirmPassword(body, request.user!.email);
     response.cookie("sudoToken", sudoToken, {
       ...cookieOptions,
-      maxAge: parseToMs(process.env.SUDO_TOKEN_EXPIRES_IN),
+      maxAge: parseToMs(process.env.SUDO_TOKEN_EXPIRES_IN!),
     });
   }
 
   private setRefreshTokenCookie(refreshToken: string, response: Response): void {
     response.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: parseToMs(process.env.REFRESH_TOKEN_EXPIRES_IN),
+      maxAge: parseToMs(process.env.REFRESH_TOKEN_EXPIRES_IN!),
     });
   }
 }

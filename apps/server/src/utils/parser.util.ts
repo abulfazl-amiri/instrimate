@@ -1,9 +1,8 @@
 /**
  * parses string based times e.g. 1s, 1m, 1h, 1d to milliseconds
- * @param {*} str the string to parse
- * @returns
+ * @param str the string to parse
  */
-const parseToMs = function (str) {
+const parseToMs = function (str: string): number {
   const unit = str.at(-1);
   const value = parseInt(str);
 
@@ -21,7 +20,7 @@ const parseToMs = function (str) {
   }
 };
 
-const parseToSec = function (str) {
+const parseToSec = function (str: string): number {
   return parseToMs(str) / 1000;
 };
 

@@ -4,7 +4,7 @@ import * as z from "zod";
 
 import AppError from "../../utils/error.util.js";
 import * as passwordUtils from "../../utils/password.util.js";
-import * as sessionService from "../auth/session.service.js";
+import { SessionService } from "../auth/session.service.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type {
   ChangePasswordInput,
@@ -84,7 +84,10 @@ const projectFields = (user: PublicUser, fields: unknown): Record<string, unknow
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sessionService: SessionService,
+  ) {}
 
   async createUser({ email, password, name }: { email: string; password: string; name: string }) {
     const normalizedEmail = getEmail(email);
@@ -166,7 +169,7 @@ export class UsersService {
   async deleteById(id: string): Promise<void> {
     if (!z.uuid().safeParse(id).success) throw new AppError("User not found", 404);
 
-    await sessionService.revokeAll(id);
+    await this.sessionService.revokeAll(id);
     await this.prisma.user.delete({ where: { id } });
   }
 
@@ -193,6 +196,6 @@ export class UsersService {
       where: { id },
       data: { passwordHash: await passwordUtils.hash(input.newPassword) },
     });
-    await sessionService.revokeAll(id);
+    await this.sessionService.revokeAll(id);
   }
 }
