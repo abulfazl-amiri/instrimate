@@ -7,7 +7,7 @@ workspace packages live in `packages/`.
 
 ```text
 apps/
-  server/       Express API
+  server/       NestJS API
   web/          Planned web app
   mobile/       Planned mobile app
 packages/
@@ -20,7 +20,7 @@ packages under `packages/`.
 
 ## Prerequisites
 
-- Node.js 18 or newer
+- Node.js 20 or newer
 - pnpm (the version is pinned in the root `package.json`; Corepack can use it)
 - Docker Compose
 
@@ -35,8 +35,8 @@ docker compose up -d
 cp apps/server/.env.example apps/server/.env
 ```
 
-Edit `apps/server/.env` with your local MongoDB connection string and any
-required secrets, then start the API:
+Edit `apps/server/.env` with the PostgreSQL connection settings and required
+secrets, then start the API:
 
 ```bash
 pnpm --filter ./apps/server dev
@@ -49,7 +49,7 @@ cd apps/server
 pnpm dev
 ```
 
-The server expects MongoDB and Redis; `docker compose up -d` starts local
+The server expects PostgreSQL and Redis; `docker compose up -d` starts local
 instances.
 
 Stop the local services with `docker compose down`.
