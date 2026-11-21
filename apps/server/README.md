@@ -94,13 +94,11 @@ CLIENT_URL=http://127.0.0.1:3000
 
 ### Run
 
-```bash
-docker compose --env-file apps/server/.env up -d
-pnpm --filter ./apps/server db:push
-pnpm --filter ./apps/server dev
-```
+For local setup, database initialization, and running the API, follow the
+repository root's [Getting started](../../README.md#getting-started)
+instructions.
 
-For production, build first and then start:
+For production, run these commands from the repository root:
 
 ```bash
 pnpm --filter ./apps/server build
