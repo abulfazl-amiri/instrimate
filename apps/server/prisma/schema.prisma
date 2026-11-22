@@ -7,16 +7,24 @@ datasource db {
 }
 
 enum UserRole {
-  admin
-  teacher
+  ADMIN
+  TEACHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
 }
 
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @db.VarChar(50)
-  email        String   @unique @db.VarChar(320)
-  passwordHash String
-  role         UserRole @default(teacher)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String        @id @default(uuid()) @db.Uuid
+  name            String        @db.VarChar(100)
+  email           String        @unique @db.VarChar(320)
+  passwordHash    String
+  status          AccountStatus @default(ACTIVE)
+  role            UserRole      @default(TEACHER)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }

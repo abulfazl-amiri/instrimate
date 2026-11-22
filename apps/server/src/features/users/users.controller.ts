@@ -29,7 +29,7 @@ import {
 } from "./user.schema.js";
 import { UsersService } from "./users.service.js";
 
-@Controller("api/v1/users")
+@Controller("users")
 @UseGuards(AccessTokenGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

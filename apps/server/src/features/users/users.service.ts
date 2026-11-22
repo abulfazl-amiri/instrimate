@@ -3,14 +3,19 @@ import type { Prisma, User } from "@prisma/client";
 import * as z from "zod";
 
 import AppError from "../../common/errors/app-error.js";
-import * as passwordUtils from "./password.util.js";
 import { SessionService } from "../auth/session.service.js";
+import * as PasswordUtils from "../../common/utils/password.util.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type { ChangePasswordInput, UpdateRoleInput, UpdateUserInput } from "./user.schema.js";
 
 type UserListQuery = Record<string, unknown>;
 type PublicUser = Omit<User, "passwordHash">;
 type UserSortField = "id" | "name" | "email" | "role" | "createdAt" | "updatedAt";
+type CreateUserInput = {
+  name: string;
+  email: string;
+  passwordHash: string;
+};
 
 @Injectable()
 export class UsersService {
@@ -19,16 +24,11 @@ export class UsersService {
     private readonly sessionService: SessionService,
   ) {}
 
-  async createUser({ email, password, name }: { email: string; password: string; name: string }) {
-    const normalizedEmail = this.getEmail(email);
-    const existingUser = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
-    if (existingUser) throw new AppError("Email is already in use", 409);
-
+  async createUser(input: CreateUserInput) {
+    input.email = this.getEmail(input.email);
     const user = await this.prisma.user.create({
       data: {
-        email: normalizedEmail,
-        name: name.trim() || normalizedEmail.split("@")[0],
-        passwordHash: await passwordUtils.hash(password),
+        ...input,
       },
     });
     return user;
@@ -40,7 +40,7 @@ export class UsersService {
 
   async verifyPassword(email: string, password: string): Promise<User | null> {
     const user = await this.findByEmail(email);
-    if (!user || !(await passwordUtils.compare(password, user.passwordHash))) return null;
+    if (!user || !(await PasswordUtils.compare(password, user.passwordHash))) return null;
 
     return user;
   }
@@ -50,7 +50,7 @@ export class UsersService {
 
     await this.prisma.user.update({
       where: { id },
-      data: { passwordHash: await passwordUtils.hash(password) },
+      data: { passwordHash: await PasswordUtils.hash(password) },
     });
   }
 
@@ -120,12 +120,12 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new AppError("User not found", 404);
 
-    const matches = await passwordUtils.compare(input.oldPassword, user.passwordHash);
+    const matches = await PasswordUtils.compare(input.oldPassword, user.passwordHash);
     if (!matches) throw new AppError("Old password was incorrect", 401);
 
     await this.prisma.user.update({
       where: { id },
-      data: { passwordHash: await passwordUtils.hash(input.newPassword) },
+      data: { passwordHash: await PasswordUtils.hash(input.newPassword) },
     });
     await this.sessionService.revokeAll(id);
   }

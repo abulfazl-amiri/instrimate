@@ -9,6 +9,7 @@ import {
 import { EmailService } from "../../infrastructure/email/email.service.js";
 import { parseToSec } from "../../common/utils/duration.util.js";
 import { UsersService } from "../users/users.service.js";
+import * as PasswordUtils from "../../common/utils/password.util.js";
 import { SessionService } from "./session.service.js";
 import type {
   ConfirmPasswordInput,
@@ -33,7 +34,17 @@ export class AuthService {
   ) {}
 
   async signup(input: SignupInput, metadata: ClientMetadata) {
-    const user = await this.usersService.createUser(input);
+    const existingUser = await this.usersService.findByEmail(input.email);
+    if (existingUser) throw new AppError("Email is already in use", 409);
+
+    const passwordHash = await PasswordUtils.hash(input.password);
+
+    const user = await this.usersService.createUser({
+      name: input.name,
+      email: input.email,
+      passwordHash: passwordHash,
+    });
+
     return this.sessionService.createSession({
       userId: user.id,
       ip: metadata.ip,
