@@ -116,6 +116,8 @@ tokens remain in Redis; user records are stored in PostgreSQL.
 
 ```http
 POST /signup
+POST /verify-email
+POST /resend-verification
 POST /signin
 POST /logout
 POST /refresh
@@ -123,6 +125,10 @@ POST /password/forgot
 POST /password/reset
 POST /confirm-password        # auth required — issues a sudo token
 ```
+
+Signup creates an active but unverified account and emails a one-time code.
+`/verify-email` verifies the code and then returns an access token and refresh
+cookie; sign-in and protected endpoints require a verified email.
 
 ### Users — `/api/v1/users` _(auth required)_
 

@@ -8,11 +8,15 @@ export class RedisService implements OnModuleDestroy {
   constructor() {
     this.client = new Redis(process.env.REDIS_URL!);
     this.client.on("connect", () => console.log("Redis connected"));
-    this.client.on("error", (error: Error) => console.error("Redis connection failed:", error));
+    this.client.on("error", (e: Error) => console.error("Redis error:", e));
   }
 
-  async onModuleDestroy(): Promise<void> {
+  async onModuleDestroy() {
     await this.client.quit();
+  }
+
+  getClient(): Redis {
+    return this.client;
   }
 
   get(key: string) {
@@ -26,6 +30,10 @@ export class RedisService implements OnModuleDestroy {
 
   del(...keys: string[]) {
     return this.client.del(...keys);
+  }
+
+  incr(key: string) {
+    return this.client.incr(key);
   }
 
   hgetall(key: string) {
@@ -50,5 +58,27 @@ export class RedisService implements OnModuleDestroy {
 
   smembers(key: string) {
     return this.client.smembers(key);
+  }
+
+  async getJson<T>(key: string): Promise<T | null> {
+    const raw = await this.client.get(key);
+    if (raw === null) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null; // corrupted value: treat as a miss
+    }
+  }
+
+  async setJson(key: string, value: unknown, ttlSeconds?: number) {
+    const raw = JSON.stringify(value);
+    return ttlSeconds === undefined
+      ? this.client.set(key, raw)
+      : this.client.set(key, raw, "EX", ttlSeconds);
+  }
+
+  // true if the key was set, false if it already existed (locks, idempotency keys)
+  async setIfAbsent(key: string, value: string, ttlSeconds: number) {
+    return (await this.client.set(key, value, "EX", ttlSeconds, "NX")) === "OK";
   }
 }

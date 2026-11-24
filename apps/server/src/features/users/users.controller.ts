@@ -8,15 +8,15 @@ import {
   Param,
   Patch,
   Query,
-  Req,
   UseGuards,
 } from "@nestjs/common";
 
 import {
   AccessTokenGuard,
   AdminGuard,
-  type AuthenticatedRequest,
 } from "../../common/security/auth.guards.js";
+import { CurrentUser } from "../../common/security/current-user.decorator.js";
+import type { AuthUser } from "../../common/security/auth-user.type.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
 import {
   changePasswordSchema,
@@ -35,31 +35,31 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get("me")
-  getMe(@Req() request: AuthenticatedRequest) {
-    return this.usersService.getById(request.user!.id);
+  getMe(@CurrentUser() user: AuthUser) {
+    return this.usersService.getById(user.id);
   }
 
   @Patch("me")
   updateMe(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(updateSchema)) body: UpdateUserInput,
   ) {
-    return this.usersService.updateById(request.user!.id, body);
+    return this.usersService.updateById(user.id, body);
   }
 
   @Delete("me")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteMe(@Req() request: AuthenticatedRequest): Promise<void> {
-    await this.usersService.deleteById(request.user!.id);
+  async deleteMe(@CurrentUser() user: AuthUser): Promise<void> {
+    await this.usersService.deleteById(user.id);
   }
 
   @Patch("me/change-password")
   @HttpCode(HttpStatus.NO_CONTENT)
   changePassword(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthUser,
     @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
   ): Promise<void> {
-    return this.usersService.changePassword(request.user!.id, body);
+    return this.usersService.changePassword(user.id, body);
   }
 
   @Get()

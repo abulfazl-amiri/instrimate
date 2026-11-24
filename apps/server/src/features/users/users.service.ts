@@ -45,6 +45,14 @@ export class UsersService {
     return user;
   }
 
+  async verifyEmail(id: string): Promise<boolean> {
+    const result = await this.prisma.user.updateMany({
+      where: { id, emailVerifiedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    });
+    return result.count === 1;
+  }
+
   async resetPassword(id: string, password: string): Promise<void> {
     if (!z.uuid().safeParse(id).success) throw new AppError("User not found", 404);
 
@@ -65,14 +73,13 @@ export class UsersService {
 
   async getFilteredUsers(query: UserListQuery): Promise<Record<string, unknown>[]> {
     const where: Prisma.UserWhereInput = {};
-    for (const field of ["name", "email"] as const) {
-      const value = query[field];
-      if (typeof value === "string" && value.trim()) {
-        where[field] = field === "email" ? this.getEmail(value) : value;
-      }
+    if (typeof query.name === "string" && query.name.trim()) where.name = query.name;
+    if (typeof query.email === "string" && query.email.trim()) {
+      where.email = this.getEmail(query.email);
     }
 
-    if (query.role === "admin" || query.role === "teacher") where.role = query.role;
+    if (query.role === "ADMIN") where.role = "ADMIN";
+    if (query.role === "TEACHER") where.role = "TEACHER";
 
     const limit = Math.min(Math.max(this.parseNumber(query.limit, 10), 1), 100);
     const page = Math.max(this.parseNumber(query.page, 1), 1);

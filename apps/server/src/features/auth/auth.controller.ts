@@ -5,19 +5,22 @@ import { parseToMs } from "../../common/utils/duration.util.js";
 import {
   AccessTokenGuard,
   RefreshTokenGuard,
-  type AuthenticatedRequest,
 } from "../../common/security/auth.guards.js";
+import { CurrentUser } from "../../common/security/current-user.decorator.js";
+import type { AuthUser } from "../../common/security/auth-user.type.js";
 import {
   confirmPasswordSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   signinSchema,
   signupSchema,
+  verifyEmailSchema,
   type ConfirmPasswordInput,
   type ForgotPasswordInput,
   type ResetPasswordInput,
   type SigninInput,
   type SignupInput,
+  type VerifyEmailInput,
 } from "./auth.schema.js";
 import { AuthService } from "./auth.service.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
@@ -40,15 +43,33 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async signup(
     @Body(new ZodValidationPipe(signupSchema)) body: SignupInput,
+  ) {
+    await this.authService.signup(body);
+    return { message: "Check your inbox for a verification code" };
+  }
+
+  @Post("verify-email")
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Body(new ZodValidationPipe(verifyEmailSchema)) body: VerifyEmailInput,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const tokens = await this.authService.signup(body, {
+    const tokens = await this.authService.verifyEmail(body, {
       ip: request.ip,
       userAgent: request.get("user-agent"),
     });
     this.setRefreshTokenCookie(tokens.refreshToken, response);
     return { token: tokens.accessToken };
+  }
+
+  @Post("resend-verification")
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordInput,
+  ) {
+    await this.authService.resendVerificationCode(body.email);
+    return { message: "If the account needs verification, a code has been sent" };
   }
 
   @Post("signin")
@@ -111,10 +132,10 @@ export class AuthController {
   @UseGuards(AccessTokenGuard)
   async confirmPassword(
     @Body(new ZodValidationPipe(confirmPasswordSchema)) body: ConfirmPasswordInput,
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser() user: AuthUser,
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
-    const sudoToken = await this.authService.confirmPassword(body, request.user!.email);
+    const sudoToken = await this.authService.confirmPassword(body, user.email);
     this.setSudoToken(sudoToken, response);
   }
 

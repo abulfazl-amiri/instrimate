@@ -1,19 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import type { User } from "@prisma/client";
 import type { Request } from "express";
 import * as z from "zod";
 
 import AppError from "../errors/app-error.js";
 import { verifyAccessToken } from "./token.util.js";
 import { PrismaService } from "../../database/prisma.service.js";
-
-export type AuthenticatedUser = Pick<
-  User,
-  "id" | "email" | "name" | "role" | "createdAt" | "updatedAt"
->;
+import type { AuthUser } from "./auth-user.type.js";
 
 export type AuthenticatedRequest = Request & {
-  user?: AuthenticatedUser;
+  user?: AuthUser;
 };
 
 @Injectable()
@@ -56,11 +51,17 @@ export class AccessTokenGuard implements CanActivate {
         email: true,
         name: true,
         role: true,
+        status: true,
+        emailVerifiedAt: true,
         createdAt: true,
         updatedAt: true,
       },
     });
     if (!user) throw new AppError("User not found", 401);
+    if (user.status !== "ACTIVE") throw new AppError("Account is not active", 403);
+    if (!user.emailVerifiedAt) {
+      throw new AppError("Email must be verified before accessing this resource", 403);
+    }
 
     request.user = user;
     return true;
@@ -71,7 +72,7 @@ export class AccessTokenGuard implements CanActivate {
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    if (request.user?.role !== "admin") {
+    if (request.user?.role !== "ADMIN") {
       throw new AppError("You do not have permission", 403);
     }
 

@@ -21,8 +21,7 @@ const nameField = requiredString()
 
 const roleField = requiredString()
   .trim()
-  .toLowerCase()
-  .pipe(z.enum(["admin", "teacher"], { error: "Invalid role" }));
+  .pipe(z.enum(["ADMIN", "TEACHER"], { error: "Invalid role" }));
 
 export const updateRoleSchema = z.object({
   role: roleField,
