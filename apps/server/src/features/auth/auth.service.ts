@@ -3,12 +3,14 @@ import { timingSafeEqual } from "node:crypto";
 import { RedisService } from "../../infrastructure/redis/redis.service.js";
 import AppError from "../../common/errors/app-error.js";
 import {
-  generateVerificationCode,
   generateResetToken,
   generateSudoToken,
-  hashVerificationCode,
   hashToken,
 } from "../../common/security/token.util.js";
+import {
+  generateVerificationCode,
+  hashVerificationCode,
+} from "../../common/security/verification-code.util.js";
 import { EmailService } from "../../infrastructure/email/email.service.js";
 import { parseToSec } from "../../common/utils/duration.util.js";
 import { UsersService } from "../users/users.service.js";

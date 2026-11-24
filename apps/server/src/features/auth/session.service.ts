@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import crypto from "node:crypto";
 
+import { signAccessToken } from "../../common/security/jwt.util.js";
 import { RedisService } from "../../infrastructure/redis/redis.service.js";
 import * as tokenUtils from "../../common/security/token.util.js";
 import { parseToSec } from "../../common/utils/duration.util.js";
@@ -38,7 +39,7 @@ export class SessionService {
   }
 
   async createSession({ userId, ip, userAgent }: CreateSessionInput) {
-    const accessToken = tokenUtils.signAccessToken(userId);
+    const accessToken = signAccessToken(userId);
     const refreshToken = tokenUtils.generateRefreshToken();
 
     const sessionKey = `session:${tokenUtils.hashToken(refreshToken)}`;

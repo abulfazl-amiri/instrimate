@@ -3,7 +3,7 @@ import type { Request } from "express";
 import * as z from "zod";
 
 import AppError from "../errors/app-error.js";
-import { verifyAccessToken } from "./token.util.js";
+import { verifyAccessToken } from "./jwt.util.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type { AuthUser } from "./auth-user.type.js";
 
