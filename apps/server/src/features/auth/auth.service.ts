@@ -39,6 +39,9 @@ const verificationResendCooldownSeconds = Number(
   process.env.EMAIL_VERIFICATION_RESEND_COOLDOWN_SECONDS ?? 60,
 );
 const verificationMaxAttempts = Number(process.env.EMAIL_VERIFICATION_MAX_ATTEMPTS ?? 5);
+const passwordResetRequestCooldownSeconds = Number(
+  process.env.PASSWORD_RESET_REQUEST_COOLDOWN_SECONDS ?? 60,
+);
 
 @Injectable()
 export class AuthService {
@@ -148,16 +151,29 @@ export class AuthService {
     const user = await this.usersService.findByEmail(input.email);
     if (!user) return;
 
+    const cooldownKey = `password-reset-request:${user.id}`;
+    const claimedCooldown = await this.redis.setIfAbsent(
+      cooldownKey,
+      "1",
+      passwordResetRequestCooldownSeconds,
+    );
+    if (!claimedCooldown) return;
+
     const resetToken = generateResetToken();
     const key = `reset:${hashToken(resetToken)}`;
     const resetTokenTtlSeconds = parseToSec(process.env.RESET_TOKEN_EXPIRES_IN!);
     await this.redis.set(key, user.id.toString(), resetTokenTtlSeconds);
     const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
-    await this.email.sendEmail({
-      to: user.email,
-      ...createPasswordResetEmailTemplate(resetUrl, resetTokenTtlSeconds),
-    });
+    try {
+      await this.email.sendEmail({
+        to: user.email,
+        ...createPasswordResetEmailTemplate(resetUrl, resetTokenTtlSeconds),
+      });
+    } catch (error) {
+      await this.redis.del(key, cooldownKey);
+      throw new AppError("Unable to send password reset email", 503, { cause: error });
+    }
   }
 
   async resetPassword(input: ResetPasswordInput) {
@@ -165,12 +181,14 @@ export class AuthService {
     const userId = await this.redis.get(key);
     if (!userId) throw new AppError("Invalid or expired reset token", 401);
 
-    await this.redis.del(key);
+    if (await this.usersService.matchesCurrentPassword(userId, input.newPassword)) {
+      throw new AppError("New password must be different from your current password", 422);
+    }
 
-    const user = await this.usersService.getById(userId);
     const passwordHash = await PasswordUtils.hash(input.newPassword);
-    await this.usersService.resetPassword(user.id, passwordHash);
-    await this.sessionService.revokeAll(user.id);
+    await this.redis.del(key);
+    await this.usersService.resetPassword(userId, passwordHash);
+    await this.sessionService.revokeAll(userId);
   }
 
   async confirmPassword(input: ConfirmPasswordInput, email: string) {

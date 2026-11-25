@@ -45,6 +45,18 @@ export class UsersService {
     return user;
   }
 
+  async matchesCurrentPassword(id: string, password: string): Promise<boolean> {
+    if (!z.uuid().safeParse(id).success) throw new AppError("User not found", 404);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { passwordHash: true },
+    });
+    if (!user) throw new AppError("User not found", 404);
+
+    return PasswordUtils.compare(password, user.passwordHash);
+  }
+
   async verifyEmail(id: string): Promise<boolean> {
     const result = await this.prisma.user.updateMany({
       where: { id, emailVerifiedAt: null },
