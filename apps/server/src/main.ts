@@ -10,9 +10,15 @@ import { VersioningType } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configuredOrigins = process.env.CORS_ORIGINS
+    ?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => new URL(origin).origin);
   const allowedOrigins = [
     "https://studio.apollographql.com",
     "https://sandbox.embed.apollographql.com",
+    ...(configuredOrigins ?? []),
     ...(process.env.CLIENT_URL ? [new URL(process.env.CLIENT_URL).origin] : []),
   ];
   app.enableCors({ origin: allowedOrigins, credentials: true });

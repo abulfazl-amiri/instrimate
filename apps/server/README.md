@@ -94,11 +94,14 @@ EMAIL_SMTP_HOST=127.0.0.1
 EMAIL_SMTP_PORT=1025
 EMAIL_SMTP_SECURE=false
 CLIENT_URL=http://127.0.0.1:3000
+CORS_ORIGINS=http://127.0.0.1:3000,https://example.com
 ```
 
 With the local `smtp` settings, start Docker Compose and view captured emails at
 [http://127.0.0.1:8025](http://127.0.0.1:8025). To send real email, set
 `EMAIL_PROVIDER=resend` and provide `RESEND_API_KEY`.
+`CORS_ORIGINS` is a comma-separated list of allowed origins; `CLIENT_URL` is
+also allowed for compatibility and is used to build authentication links.
 
 ### Run
 
@@ -122,8 +125,8 @@ at `http://127.0.0.1:3000/graphql` by default. The server writes its generated
 GraphQL schema to `apps/server/schema.gql` on startup, which can be inspected
 without Apollo Sandbox. The file describes the API but is not an interactive
 GraphQL client. The public `health` query returns `"ok"` without requiring
-authentication. CORS allows Apollo Sandbox and the origin configured by
-`CLIENT_URL`.
+authentication. CORS allows Apollo Sandbox and the origins configured by
+`CORS_ORIGINS` or `CLIENT_URL`.
 
 ### Auth — `/api/v1/auth`
 
