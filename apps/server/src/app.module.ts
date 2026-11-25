@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ApolloDriver, type ApolloDriverConfig } from "@nestjs/apollo";
 import { GraphQLModule } from "@nestjs/graphql";
+import { join } from "node:path";
 import type { Request, Response } from "express";
 
 import { AppController } from "./app.controller.js";
@@ -13,7 +14,7 @@ import { UsersModule } from "./features/users/users.module.js";
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
+      autoSchemaFile: join(process.cwd(), "schema.gql"),
       sortSchema: true,
       context: ({ req, res }: { req: Request; res: Response }) => ({ req, res }),
     }),

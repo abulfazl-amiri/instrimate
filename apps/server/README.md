@@ -118,8 +118,10 @@ The server connects to PostgreSQL, then listens on `PORT` (default `3000`).
 ## API Overview
 
 Auth REST routes are versioned under `/api/v1`. Users operations are available
-at `http://127.0.0.1:3000/graphql` by default. Apollo Sandbox can be used to
-explore the schema; the public `health` query returns `"ok"` without requiring
+at `http://127.0.0.1:3000/graphql` by default. The server writes its generated
+GraphQL schema to `apps/server/schema.gql` on startup, which can be inspected
+without Apollo Sandbox. The file describes the API but is not an interactive
+GraphQL client. The public `health` query returns `"ok"` without requiring
 authentication. CORS allows Apollo Sandbox and the origin configured by
 `CLIENT_URL`.
 

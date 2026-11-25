@@ -1,0 +1,80 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+enum AccountStatus {
+  ACTIVE
+  DELETED
+  SUSPENDED
+}
+
+input ChangePasswordInput {
+  newPassword: String!
+  oldPassword: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  changeMyPassword(input: ChangePasswordInput!): Boolean!
+  deleteMe: Boolean!
+  deleteUser(id: ID!): Boolean!
+  updateMe(input: UpdateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+  updateUserRole(id: ID!, input: UpdateRoleInput!): User!
+}
+
+type Query {
+  health: String!
+  me: User!
+  user(id: ID!): User!
+  users(filter: UserFilterInput): UsersResult!
+}
+
+input UpdateRoleInput {
+  role: UserRole!
+}
+
+input UpdateUserInput {
+  email: String
+  name: String
+}
+
+type User {
+  createdAt: DateTime!
+  email: String!
+  emailVerifiedAt: DateTime
+  id: ID!
+  name: String!
+  role: UserRole!
+  status: AccountStatus!
+  updatedAt: DateTime!
+}
+
+input UserFilterInput {
+  email: String
+  limit: Int
+  name: String
+  page: Int
+  role: UserRole
+  sort: String
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+}
+
+type UsersResult {
+  data: [User!]!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  limit: Int!
+  page: Int!
+  results: Int!
+  totalCount: Int!
+  totalPages: Int!
+}
