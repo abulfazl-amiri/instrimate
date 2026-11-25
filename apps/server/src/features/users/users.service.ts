@@ -8,7 +8,24 @@ import * as PasswordUtils from "../../common/utils/password.util.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import type { ChangePasswordInput, UpdateRoleInput, UpdateUserInput } from "./user.schema.js";
 
-type UserListQuery = Record<string, unknown>;
+type UserListQuery = {
+  name?: string;
+  email?: string;
+  role?: string;
+  limit?: number;
+  page?: number;
+  sort?: string;
+};
+type PaginatedUsers = {
+  results: number;
+  data: PublicUser[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
 type PublicUser = Omit<User, "passwordHash">;
 type UserSortField = "id" | "name" | "email" | "role" | "createdAt" | "updatedAt";
 type CreateUserInput = {
@@ -83,26 +100,39 @@ export class UsersService {
     return this.toPublicUser(user);
   }
 
-  async getFilteredUsers(query: UserListQuery): Promise<Record<string, unknown>[]> {
+  async getFilteredUsers(query: UserListQuery): Promise<PaginatedUsers> {
     const where: Prisma.UserWhereInput = {};
-    if (typeof query.name === "string" && query.name.trim()) where.name = query.name;
-    if (typeof query.email === "string" && query.email.trim()) {
+    if (query.name?.trim()) where.name = query.name;
+    if (query.email?.trim()) {
       where.email = this.getEmail(query.email);
     }
 
     if (query.role === "ADMIN") where.role = "ADMIN";
     if (query.role === "TEACHER") where.role = "TEACHER";
 
-    const limit = Math.min(Math.max(this.parseNumber(query.limit, 10), 1), 100);
-    const page = Math.max(this.parseNumber(query.page, 1), 1);
-    const users = await this.prisma.user.findMany({
-      where,
-      orderBy: this.getOrderBy(query.sort),
-      skip: limit * (page - 1),
-      take: limit,
-    });
+    const limit = Math.min(Math.max(query.limit ?? 10, 1), 100);
+    const page = Math.max(query.page ?? 1, 1);
+    const [users, totalCount] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        orderBy: this.getOrderBy(query.sort),
+        skip: limit * (page - 1),
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+    const totalPages = Math.ceil(totalCount / limit);
 
-    return users.map((user) => this.projectFields(this.toPublicUser(user), query.fields));
+    return {
+      results: users.length,
+      data: users.map((user) => this.toPublicUser(user)),
+      totalCount,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
   }
 
   async updateById(id: string, input: UpdateUserInput): Promise<PublicUser> {
@@ -161,13 +191,10 @@ export class UsersService {
     return user;
   }
 
-  private parseNumber(value: unknown, fallback: number): number {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
-  }
-
   private getOrderBy(value: unknown): Prisma.UserOrderByWithRelationInput[] {
-    if (typeof value !== "string" || !value.trim()) return [{ createdAt: "desc" }];
+    if (typeof value !== "string" || !value.trim()) {
+      return [{ createdAt: "desc" }, { id: "asc" }];
+    }
 
     const orderBy: Prisma.UserOrderByWithRelationInput[] = [];
     for (const field of value.split(",")) {
@@ -197,29 +224,8 @@ export class UsersService {
       }
     }
 
-    return orderBy.length ? orderBy : [{ createdAt: "desc" }];
-  }
-
-  private projectFields(user: PublicUser, fields: unknown): Record<string, unknown> {
-    const availableFields = Object.keys(user) as Array<keyof PublicUser>;
-    if (typeof fields !== "string" || !fields.trim()) {
-      return Object.fromEntries(
-        availableFields
-          .filter((field) => field !== "createdAt" && field !== "updatedAt")
-          .map((field) => [field, user[field]]),
-      );
-    }
-
-    const requestedFields = fields.split(",").map((field) => field.trim());
-    const includeFields = requestedFields.filter((field) => !field.startsWith("-"));
-    const excludedFields = new Set(
-      requestedFields.filter((field) => field.startsWith("-")).map((field) => field.slice(1)),
-    );
-    const selectedFields =
-      includeFields.length > 0
-        ? availableFields.filter((field) => includeFields.includes(field))
-        : availableFields.filter((field) => !excludedFields.has(field));
-
-    return Object.fromEntries(selectedFields.map((field) => [field, user[field]]));
+    if (orderBy.length === 0) return [{ createdAt: "desc" }, { id: "asc" }];
+    if (!orderBy.some((field) => "id" in field)) orderBy.push({ id: "asc" });
+    return orderBy;
   }
 }

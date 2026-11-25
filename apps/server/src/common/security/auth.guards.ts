@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { GqlExecutionContext } from "@nestjs/graphql";
 import type { Request } from "express";
 import * as z from "zod";
 
@@ -10,6 +11,18 @@ import type { AuthUser } from "./auth-user.type.js";
 export type AuthenticatedRequest = Request & {
   user?: AuthUser;
 };
+
+export function getAuthenticatedRequest(context: ExecutionContext): AuthenticatedRequest {
+  if (context.getType<string>() === "graphql") {
+    const request = GqlExecutionContext.create(context).getContext<{
+      req?: AuthenticatedRequest;
+    }>().req;
+    if (!request) throw new AppError("Request context is unavailable", 500);
+    return request;
+  }
+
+  return context.switchToHttp().getRequest<AuthenticatedRequest>();
+}
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
@@ -28,7 +41,7 @@ export class AccessTokenGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = getAuthenticatedRequest(context);
     const authorization = request.headers.authorization;
     if (!authorization) throw new AppError("Authorization header is missing", 401);
 
@@ -71,7 +84,7 @@ export class AccessTokenGuard implements CanActivate {
 @Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = getAuthenticatedRequest(context);
     if (request.user?.role !== "ADMIN") {
       throw new AppError("You do not have permission", 403);
     }

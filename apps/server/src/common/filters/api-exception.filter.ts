@@ -4,6 +4,7 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from "@nestjs/common";
+import { GraphQLError } from "graphql";
 import type { Response } from "express";
 
 import AppError, { generateErrorCode } from "../errors/app-error.js";
@@ -95,7 +96,7 @@ const getMappedError = (exception: unknown): MappedError => {
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: unknown, host: ArgumentsHost): GraphQLError | void {
     const mapped = getMappedError(exception);
     const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -109,6 +110,17 @@ export class ApiExceptionFilter implements ExceptionFilter {
     if (isDevelopment) {
       if (mapped.details) responseBody.details = mapped.details;
       if (exception instanceof Error) responseBody.stack = exception.stack;
+    }
+
+    if (host.getType<string>() === "graphql") {
+      return new GraphQLError(mapped.message, {
+        extensions: {
+          code: mapped.errorCode || generateErrorCode(mapped.statusCode),
+          statusCode: mapped.statusCode,
+          ...(isDevelopment && mapped.details ? { details: mapped.details } : {}),
+          ...(isDevelopment && exception instanceof Error ? { stack: exception.stack } : {}),
+        },
+      });
     }
 
     host.switchToHttp().getResponse<Response>().status(mapped.statusCode).json(responseBody);

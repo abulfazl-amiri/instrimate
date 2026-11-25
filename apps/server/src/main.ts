@@ -10,6 +10,12 @@ import { VersioningType } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const allowedOrigins = [
+    "https://studio.apollographql.com",
+    "https://sandbox.embed.apollographql.com",
+    ...(process.env.CLIENT_URL ? [new URL(process.env.CLIENT_URL).origin] : []),
+  ];
+  app.enableCors({ origin: allowedOrigins, credentials: true });
   app.use(cookieParser());
   app.useGlobalFilters(new ApiExceptionFilter());
   app.enableShutdownHooks();

@@ -21,6 +21,7 @@ relationships from the removed features.
 
 - **Runtime:** Node.js (ES modules), TypeScript
 - **Framework:** NestJS 11
+- **API:** GraphQL (Users) and REST (Auth)
 - **Database:** PostgreSQL with Prisma
 - **Cache / token store:** Redis (via ioredis)
 - **Validation:** Zod
@@ -48,8 +49,8 @@ apps/server/
     └── schema.prisma          # PostgreSQL User model
 ```
 
-Requests flow through **NestJS controller → guard/validation → service →
-Prisma**.
+Requests flow through **NestJS resolver/controller → guard/validation →
+service → Prisma**.
 
 ## Getting Started
 
@@ -116,7 +117,11 @@ The server connects to PostgreSQL, then listens on `PORT` (default `3000`).
 
 ## API Overview
 
-All routes are versioned under `/api/v1`.
+Auth REST routes are versioned under `/api/v1`. Users operations are available
+at `http://127.0.0.1:3000/graphql` by default. Apollo Sandbox can be used to
+explore the schema; the public `health` query returns `"ok"` without requiring
+authentication. CORS allows Apollo Sandbox and the origin configured by
+`CLIENT_URL`.
 
 ### Auth — `/api/v1/auth`
 
@@ -139,24 +144,58 @@ Signup creates an active but unverified account and emails a one-time code.
 `/verify-email` verifies the code and then returns an access token and refresh
 cookie; sign-in and protected endpoints require a verified email.
 
-### Users — `/api/v1/users` _(auth required)_
+### Users — `/graphql` _(auth required)_
 
-```http
-GET    /me
-PATCH  /me
-DELETE /me
-PATCH  /me/change-password
+Send the access token in the `Authorization: Bearer <token>` header. Users
+operations are GraphQL queries and mutations:
 
-GET    /                      # admin only
-GET    /:id                   # admin only
-PATCH  /:id                   # admin only
-DELETE /:id                   # admin only
-PATCH  /:id/role              # admin only
+```graphql
+query CurrentUser {
+  me {
+    id
+    name
+    email
+    role
+  }
+}
+
+mutation UpdateMyProfile {
+  updateMe(input: { name: "New name" }) {
+    id
+    name
+    email
+  }
+}
+
+query AdminUserList {
+  users(filter: { role: TEACHER, limit: 10, page: 1, sort: "-createdAt" }) {
+    results
+    totalCount
+    page
+    limit
+    totalPages
+    hasNextPage
+    hasPreviousPage
+    data {
+      id
+      name
+      email
+      role
+    }
+  }
+}
 ```
+
+The admin `users` query uses offset pagination. `page` defaults to `1`;
+`limit` defaults to `10` and is capped at `100`. `results` is the number of
+users on the current page, while `totalCount` is the number matching the
+filters across all pages.
 
 New signups have the `teacher` role. For local development, promote an initial
 user through Prisma Studio (`pnpm --filter ./apps/server exec prisma studio`)
-before using admin-only endpoints.
+before using admin-only Users queries and mutations. The `me`,
+`updateMe`, `deleteMe`, and `changeMyPassword` operations are self-service;
+`users`, `user`, `updateUser`, `deleteUser`, and `updateUserRole` are admin-only.
 
 Legacy session-management endpoints and the courses, lessons, timetables,
 enrollments, invites, students, resources, resource access, and non-teaching

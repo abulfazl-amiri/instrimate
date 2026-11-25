@@ -37,6 +37,17 @@ export const updateSchema = z.object({
   name: nameField.optional(),
 });
 
+export const userFilterSchema = z
+  .object({
+    name: z.string().optional(),
+    email: z.string().optional(),
+    role: z.enum(["ADMIN", "TEACHER"]).optional(),
+    limit: z.number().int().optional(),
+    page: z.number().int().optional(),
+    sort: z.string().optional(),
+  })
+  .nullish();
+
 export const userIdSchema = z.uuid();
 
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
