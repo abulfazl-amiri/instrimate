@@ -16,6 +16,8 @@ import { parseToSec } from "../../common/utils/duration.util.js";
 import { UsersService } from "../users/users.service.js";
 import * as PasswordUtils from "../../common/utils/password.util.js";
 import { SessionService } from "./session.service.js";
+import { createPasswordResetEmailTemplate } from "../../templates/auth/password-reset-email.template.js";
+import { createVerificationEmailTemplate } from "../../templates/auth/verification-email.template.js";
 import type {
   ConfirmPasswordInput,
   ForgotPasswordInput,
@@ -148,15 +150,13 @@ export class AuthService {
 
     const resetToken = generateResetToken();
     const key = `reset:${hashToken(resetToken)}`;
-    await this.redis.set(key, user.id.toString(), parseToSec(process.env.RESET_TOKEN_EXPIRES_IN!));
+    const resetTokenTtlSeconds = parseToSec(process.env.RESET_TOKEN_EXPIRES_IN!);
+    await this.redis.set(key, user.id.toString(), resetTokenTtlSeconds);
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
 
     await this.email.sendEmail({
       to: user.email,
-      subject: "Reset password",
-      message:
-        "Your password reset link for Instrimate is:" +
-        `\n${process.env.CLIENT_URL}/reset-password?token=${resetToken}\n` +
-        "Please don't share it with anyone",
+      ...createPasswordResetEmailTemplate(resetUrl, resetTokenTtlSeconds),
     });
   }
 
@@ -168,7 +168,8 @@ export class AuthService {
     await this.redis.del(key);
 
     const user = await this.usersService.getById(userId);
-    await this.usersService.resetPassword(user.id, input.newPassword);
+    const passwordHash = await PasswordUtils.hash(input.newPassword);
+    await this.usersService.resetPassword(user.id, passwordHash);
     await this.sessionService.revokeAll(user.id);
   }
 
@@ -201,14 +202,14 @@ export class AuthService {
       verificationCodeTtlSeconds,
     );
     await this.redis.del(attemptsKey);
-    const result = await this.email.sendEmail({
-      to: email,
-      subject: "Verify your Instrimate email",
-      message: `Your Instrimate verification code is ${code}. It expires in ${verificationCodeTtlSeconds} seconds.`,
-    });
-    if (result.error) {
+    try {
+      await this.email.sendEmail({
+        to: email,
+        ...createVerificationEmailTemplate(code, verificationCodeTtlSeconds),
+      });
+    } catch (error) {
       await this.redis.del(codeKey, attemptsKey, cooldownKey);
-      throw new AppError("Unable to send verification code", 503);
+      throw new AppError("Unable to send verification code", 503, { cause: error });
     }
   }
 }

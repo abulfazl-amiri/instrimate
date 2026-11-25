@@ -25,7 +25,7 @@ relationships from the removed features.
 - **Cache / token store:** Redis (via ioredis)
 - **Validation:** Zod
 - **Auth:** jsonwebtoken, bcrypt, cookie-parser
-- **Email:** Resend
+- **Email:** Mailpit over SMTP locally; Resend in production
 - **Config:** dotenv
 - **Tooling:** ESLint, Prettier
 
@@ -86,9 +86,16 @@ REFRESH_TOKEN_EXPIRES_IN=7d
 RESET_TOKEN_EXPIRES_IN=15m
 SUDO_TOKEN_EXPIRES_IN=10m
 
-RESEND_API_KEY=your_resend_api_key
+EMAIL_PROVIDER=smtp
+EMAIL_SMTP_HOST=127.0.0.1
+EMAIL_SMTP_PORT=1025
+EMAIL_SMTP_SECURE=false
 CLIENT_URL=http://127.0.0.1:3000
 ```
+
+With the local `smtp` settings, start Docker Compose and view captured emails at
+[http://127.0.0.1:8025](http://127.0.0.1:8025). To send real email, set
+`EMAIL_PROVIDER=resend` and provide `RESEND_API_KEY`.
 
 ### Run
 

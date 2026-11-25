@@ -219,6 +219,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      nodemailer:
+        specifier: ^10.6.1
+        version: 10.6.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -262,6 +265,9 @@ importers:
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
+      '@types/nodemailer':
+        specifier: ^8.0.2
+        version: 8.0.2
       eslint:
         specifier: ^10.15.0
         version: 10.15.0(jiti@2.7.0)
@@ -1130,6 +1136,9 @@ packages:
 
   '@types/node@24.19.2':
     resolution: {integrity: sha512-93d49wCWJkCyN87MxLpNN6KXPCwFw7bVUg79mGUV1OS40JGWwVCr8n61DXCSqz7CV6/VfPkb7xec7uP2M+QHWQ==}
+
+  '@types/nodemailer@8.0.2':
+    resolution: {integrity: sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==}
 
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
@@ -2249,6 +2258,10 @@ packages:
   node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
     hasBin: true
+
+  nodemailer@10.6.1:
+    resolution: {integrity: sha512-d7kfFfS/tR4Aca+SBvRaQ+MXKNv7d2JiRe5TxaRcFT/kYMh4GGPnW9aKksTIEvyEbA7d/7HYWE4YPDEHxzJj/g==}
+    engines: {node: '>=20.0.0'}
 
   normalize-url@8.1.1:
     resolution: {integrity: sha512-JYc0DPlpGWB40kH5g07gGTrYuMqV653k3uBKY6uITPWds3M0ov3GaWGp9lbE3Bzngx8+XkfzgvASb9vk9JDFXQ==}
@@ -3635,6 +3648,10 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
+  '@types/nodemailer@8.0.2':
+    dependencies:
+      '@types/node': 24.19.2
+
   '@types/pg@8.23.1':
     dependencies:
       '@types/node': 24.19.2
@@ -4852,6 +4869,8 @@ snapshots:
       skin-tone: 2.0.0
 
   node-gyp-build@4.8.4: {}
+
+  nodemailer@10.6.1: {}
 
   normalize-url@8.1.1: {}
 

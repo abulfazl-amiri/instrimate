@@ -53,12 +53,12 @@ export class UsersService {
     return result.count === 1;
   }
 
-  async resetPassword(id: string, password: string): Promise<void> {
+  async resetPassword(id: string, passwordHash: string): Promise<void> {
     if (!z.uuid().safeParse(id).success) throw new AppError("User not found", 404);
 
     await this.prisma.user.update({
       where: { id },
-      data: { passwordHash: await PasswordUtils.hash(password) },
+      data: { passwordHash },
     });
   }
 
