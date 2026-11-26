@@ -181,6 +181,14 @@ export class UsersService {
     const matches = await PasswordUtils.compare(input.oldPassword, user.passwordHash);
     if (!matches) throw new AppError("Old password was incorrect", 401);
 
+    const newPasswordMatchesCurrent = await PasswordUtils.compare(
+      input.newPassword,
+      user.passwordHash,
+    );
+    if (newPasswordMatchesCurrent) {
+      throw new AppError("New password must be different from your current password", 422);
+    }
+
     await this.prisma.user.update({
       where: { id },
       data: { passwordHash: await PasswordUtils.hash(input.newPassword) },
