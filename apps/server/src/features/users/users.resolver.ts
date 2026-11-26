@@ -11,6 +11,7 @@ import type { AuthUser } from "../../common/security/auth-user.type.js";
 import {
   changePasswordSchema,
   updateRoleSchema,
+  updateMeSchema,
   updateSchema,
   userFilterSchema,
   userIdSchema,
@@ -19,6 +20,7 @@ import { UsersService } from "./users.service.js";
 import {
   ChangePasswordInput,
   UpdateRoleInput,
+  UpdateMeInput,
   UpdateUserInput,
   User,
   UserFilterInput,
@@ -38,7 +40,7 @@ export class UsersResolver {
   @Mutation(() => User)
   updateMe(
     @CurrentUser() user: AuthUser,
-    @Args("input", new ZodValidationPipe(updateSchema)) input: UpdateUserInput,
+    @Args("input", new ZodValidationPipe(updateMeSchema)) input: UpdateMeInput,
   ) {
     return this.usersService.updateById(user.id, input);
   }

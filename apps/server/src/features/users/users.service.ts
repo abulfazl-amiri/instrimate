@@ -139,7 +139,16 @@ export class UsersService {
     if (!z.uuid().safeParse(id).success) throw new AppError("User not found", 404);
 
     const data: Prisma.UserUpdateInput = {};
-    if (input.email !== undefined) data.email = this.getEmail(input.email);
+    if (input.email !== undefined) {
+      const email = this.getEmail(input.email);
+      data.email = email;
+
+      const currentUser = await this.prisma.user.findUnique({
+        where: { id },
+        select: { email: true },
+      });
+      if (currentUser && currentUser.email !== email) data.emailVerifiedAt = null;
+    }
     if (input.name !== undefined) data.name = input.name.trim();
 
     const user = await this.prisma.user.update({ where: { id }, data });

@@ -38,7 +38,7 @@ type Mutation {
   deleteUser(id: ID!): Boolean!
   logoutSessions(includeCurrentSession: Boolean! = false): LogoutSessionsResult!
   revokeSession(sessionId: ID!): LogoutSessionsResult!
-  updateMe(input: UpdateUserInput!): User!
+  updateMe(input: UpdateMeInput!): User!
   updateUser(id: ID!, input: UpdateUserInput!): User!
   updateUserRole(id: ID!, input: UpdateRoleInput!): User!
 }
@@ -49,6 +49,10 @@ type Query {
   mySessions: [DeviceSession!]!
   user(id: ID!): User!
   users(filter: UserFilterInput): UsersResult!
+}
+
+input UpdateMeInput {
+  name: String
 }
 
 input UpdateRoleInput {

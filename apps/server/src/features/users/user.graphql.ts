@@ -91,6 +91,12 @@ export class UserFilterInput {
 }
 
 @InputType()
+export class UpdateMeInput {
+  @Field({ nullable: true })
+  name?: string;
+}
+
+@InputType()
 export class UpdateUserInput {
   @Field({ nullable: true })
   email?: string;

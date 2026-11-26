@@ -32,6 +32,10 @@ export const changePasswordSchema = z.object({
   newPassword: passwordField,
 });
 
+export const updateMeSchema = z.object({
+  name: nameField.optional(),
+});
+
 export const updateSchema = z.object({
   email: emailField.optional(),
   name: nameField.optional(),
@@ -52,4 +56,5 @@ export const userIdSchema = z.uuid();
 
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type UpdateMeInput = z.infer<typeof updateMeSchema>;
 export type UpdateUserInput = z.infer<typeof updateSchema>;
