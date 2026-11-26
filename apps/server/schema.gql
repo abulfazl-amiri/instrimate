@@ -36,8 +36,8 @@ type Mutation {
   changeMyPassword(input: ChangePasswordInput!): Boolean!
   deleteMe: Boolean!
   deleteUser(id: ID!): Boolean!
-  logoutSessions(includeCurrentSession: Boolean! = false): LogoutSessionsResult!
   revokeSession(sessionId: ID!): LogoutSessionsResult!
+  revokeSessions(includeCurrentSession: Boolean! = false): LogoutSessionsResult!
   updateMe(input: UpdateMeInput!): User!
   updateUser(id: ID!, input: UpdateUserInput!): User!
   updateUserRole(id: ID!, input: UpdateRoleInput!): User!

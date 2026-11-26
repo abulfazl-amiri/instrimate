@@ -36,7 +36,7 @@ export class SessionsResolver {
 
   @Mutation(() => LogoutSessionsResult)
   @UseGuards(SudoTokenGuard)
-  async logoutSessions(
+  async revokeSessions(
     @CurrentUser() user: AuthUser,
     @CurrentSessionId() currentSessionId: string,
     @Args("includeCurrentSession", { type: () => Boolean, defaultValue: false })
