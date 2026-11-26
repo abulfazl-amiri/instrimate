@@ -8,13 +8,13 @@ workspace packages live in `packages/`.
 ```text
 apps/
   server/       NestJS API
-  web/          Planned web app
+  web/          Next.js web app
   mobile/       Planned mobile app
 packages/
   shared/       Shared code, when needed by multiple apps
 ```
 
-Only `apps/server` exists today. The workspace patterns in
+`apps/server` and `apps/web` exist today. The workspace patterns in
 `pnpm-workspace.yaml` automatically include future apps under `apps/` and
 packages under `packages/`.
 
@@ -53,6 +53,19 @@ pnpm dev
 ```
 
 Stop the local services from the repository root with `docker compose down`.
+
+## Run the web app
+
+The web app talks to the API through a proxy in `apps/web/next.config.ts`, so
+start the API first (see above), then:
+
+```bash
+cp apps/web/.env.example apps/web/.env
+pnpm --filter ./apps/web dev
+```
+
+Open [http://localhost:3001](http://localhost:3001). The home page shows
+whether it can reach the API. Other useful scripts: `build`, `typecheck`, `lint`.
 
 ## View the database
 

@@ -20,3 +20,7 @@ Thumbs.db
 # Tool folders
 .codex
 .sixth
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
