@@ -97,9 +97,14 @@ CLIENT_URL=http://127.0.0.1:3000
 CORS_ORIGINS=http://127.0.0.1:3000,https://example.com
 ```
 
-With the local `smtp` settings, start Docker Compose and view captured emails at
-[http://127.0.0.1:8025](http://127.0.0.1:8025). To send real email, set
-`EMAIL_PROVIDER=resend` and provide `RESEND_API_KEY`.
+With the local `smtp` settings, start Mailpit from the repository root:
+
+```bash
+docker compose --env-file apps/server/.env up -d mailpit
+```
+
+View captured emails at [http://127.0.0.1:8025](http://127.0.0.1:8025).
+To send real email, set `EMAIL_PROVIDER=resend` and provide `RESEND_API_KEY`.
 `CORS_ORIGINS` is a comma-separated list of allowed origins; `CLIENT_URL` is
 also allowed for compatibility and is used to build authentication links.
 
