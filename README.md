@@ -7,7 +7,7 @@ workspace packages live in `packages/`.
 
 ```text
 apps/
-  server/       Express API
+  server/       NestJS API
   web/          Planned web app
   mobile/       Planned mobile app
 packages/
@@ -20,7 +20,7 @@ packages under `packages/`.
 
 ## Prerequisites
 
-- Node.js 18 or newer
+- Node.js 20 or newer
 - pnpm (the version is pinned in the root `package.json`; Corepack can use it)
 - Docker Compose
 
@@ -31,28 +31,43 @@ Run commands from the repository root unless noted otherwise:
 ```bash
 corepack enable
 pnpm install
-docker compose up -d
 cp apps/server/.env.example apps/server/.env
 ```
 
-Edit `apps/server/.env` with your local MongoDB connection string and any
-required secrets, then start the API:
+Set the values in `apps/server/.env`, then start the local dependencies,
+initialize the database schema, and run the API:
 
 ```bash
+docker compose --env-file apps/server/.env up -d
+pnpm --filter ./apps/server db:push
 pnpm --filter ./apps/server dev
 ```
 
-Or run it from the server directory:
+Alternatively, after changing to `apps/server`, use:
 
 ```bash
 cd apps/server
+docker compose --env-file .env -f ../../docker-compose.yml up -d
+pnpm db:push
 pnpm dev
 ```
 
-The server expects MongoDB and Redis; `docker compose up -d` starts local
-instances.
+Stop the local services from the repository root with `docker compose down`.
 
-Stop the local services with `docker compose down`.
+## View the database
+
+After following the Getting started steps and applying the Prisma schema, run
+Prisma Studio from the repository root:
+
+```bash
+pnpm --filter ./apps/server exec prisma studio
+```
+
+Open [http://localhost:5555](http://localhost:5555) to browse and edit the
+PostgreSQL data, including users. Stop Prisma Studio with `Ctrl+C`.
+
+Prisma Studio only shows PostgreSQL data. Redis is separate and stores
+temporary auth data such as sessions and tokens.
 
 ## Environment files
 
