@@ -11,9 +11,9 @@ function generateToken(
   });
 }
 
-export function signAccessToken(userId: string): string {
+export function signAccessToken(userId: string, sessionId: string): string {
   return generateToken(
-    { sub: userId.toString() },
+    { sub: userId.toString(), sid: sessionId },
     process.env.JWT_SECRET!,
     process.env.JWT_EXPIRES_IN! as SignOptions["expiresIn"],
   );

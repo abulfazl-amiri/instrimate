@@ -12,3 +12,11 @@ export const CurrentUser = createParamDecorator(
     return request.user;
   },
 );
+
+export const CurrentSessionId = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): string => {
+    const request = getAuthenticatedRequest(context);
+    if (!request.sessionId) throw new AppError("Authenticated session is unavailable", 401);
+    return request.sessionId;
+  },
+);

@@ -81,4 +81,14 @@ export class RedisService implements OnModuleDestroy {
   async setIfAbsent(key: string, value: string, ttlSeconds: number) {
     return (await this.client.set(key, value, "EX", ttlSeconds, "NX")) === "OK";
   }
+
+  async consumeIfValue(key: string, value: string): Promise<boolean> {
+    const result = await this.client.eval(
+      "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) end return 0",
+      1,
+      key,
+      value,
+    );
+    return Number(result) === 1;
+  }
 }

@@ -18,10 +18,26 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type DeviceSession {
+  createdAt: DateTime
+  current: Boolean!
+  ip: String
+  lastRefreshedAt: DateTime
+  sessionId: ID!
+  userAgent: String
+}
+
+type LogoutSessionsResult {
+  currentSessionRevoked: Boolean!
+  sessionsRevoked: Int!
+}
+
 type Mutation {
   changeMyPassword(input: ChangePasswordInput!): Boolean!
   deleteMe: Boolean!
   deleteUser(id: ID!): Boolean!
+  logoutSessions(includeCurrentSession: Boolean! = false): LogoutSessionsResult!
+  revokeSession(sessionId: ID!): LogoutSessionsResult!
   updateMe(input: UpdateUserInput!): User!
   updateUser(id: ID!, input: UpdateUserInput!): User!
   updateUserRole(id: ID!, input: UpdateRoleInput!): User!
@@ -30,6 +46,7 @@ type Mutation {
 type Query {
   health: String!
   me: User!
+  mySessions: [DeviceSession!]!
   user(id: ID!): User!
   users(filter: UserFilterInput): UsersResult!
 }

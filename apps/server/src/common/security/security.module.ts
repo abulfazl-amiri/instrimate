@@ -1,9 +1,16 @@
 import { Module } from "@nestjs/common";
 
-import { AccessTokenGuard, AdminGuard, RefreshTokenGuard } from "./auth.guards.js";
+import {
+  AccessTokenGuard,
+  AdminGuard,
+  RefreshTokenGuard,
+  SudoTokenGuard,
+} from "./auth.guards.js";
+import { RedisModule } from "../../infrastructure/redis/redis.module.js";
 
 @Module({
-  providers: [AccessTokenGuard, AdminGuard, RefreshTokenGuard],
-  exports: [AccessTokenGuard, AdminGuard, RefreshTokenGuard],
+  imports: [RedisModule],
+  providers: [AccessTokenGuard, AdminGuard, RefreshTokenGuard, SudoTokenGuard],
+  exports: [AccessTokenGuard, AdminGuard, RefreshTokenGuard, SudoTokenGuard],
 })
 export class SecurityModule {}

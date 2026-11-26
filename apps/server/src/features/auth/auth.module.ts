@@ -7,10 +7,11 @@ import { SecurityModule } from "../../common/security/security.module.js";
 import { SessionModule } from "./session.module.js";
 import { EmailModule } from "../../infrastructure/email/email.module.js";
 import { RedisModule } from "../../infrastructure/redis/redis.module.js";
+import { SessionsResolver } from "./sessions.resolver.js";
 
 @Module({
   imports: [UsersModule, SecurityModule, SessionModule, EmailModule, RedisModule],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, SessionsResolver],
 })
 export class AuthModule {}

@@ -140,6 +140,8 @@ export class AuthService {
       userId: user.id,
       ip: metadata.ip,
       userAgent: metadata.userAgent,
+      sessionId: session.sessionId,
+      createdAt: session.createdAt,
     });
   }
 

@@ -24,12 +24,7 @@ import {
 } from "./auth.schema.js";
 import { AuthService } from "./auth.service.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: true,
-  sameSite: "strict" as const,
-};
+import { authCookieOptions, clearAuthCookies } from "./auth-cookies.util.js";
 
 type CookieRequest = Request & {
   cookies?: Record<string, string | undefined>;
@@ -95,8 +90,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<void> {
     await this.authService.logout(request.cookies!.refreshToken!);
-    response.clearCookie("refreshToken", cookieOptions);
-    response.clearCookie("sudoToken", cookieOptions);
+    clearAuthCookies(response);
   }
 
   @Post("refresh")
@@ -141,14 +135,14 @@ export class AuthController {
 
   private setRefreshTokenCookie(refreshToken: string, response: Response): void {
     response.cookie("refreshToken", refreshToken, {
-      ...cookieOptions,
+      ...authCookieOptions,
       maxAge: parseToMs(process.env.REFRESH_TOKEN_EXPIRES_IN!),
     });
   }
 
   private setSudoToken(sudoToken: string, response: Response): void {
     response.cookie("sudoToken", sudoToken, {
-      ...cookieOptions,
+      ...authCookieOptions,
       maxAge: parseToMs(process.env.SUDO_TOKEN_EXPIRES_IN!),
     });
   }
