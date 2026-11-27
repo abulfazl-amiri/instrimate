@@ -1,0 +1,78 @@
+name: Server
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: server-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck, lint and integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: instrimate
+          POSTGRES_PASSWORD: instrimate
+          POSTGRES_DB: instrimate_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U instrimate -d instrimate_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      # Prisma's config file needs a datasource URL even for `generate`.
+      DATABASE_URL: postgresql://instrimate:instrimate@127.0.0.1:5432/instrimate_test
+      TEST_DATABASE_URL: postgresql://instrimate:instrimate@127.0.0.1:5432/instrimate_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter ./apps/server db:generate
+
+      - name: Typecheck
+        run: pnpm --filter ./apps/server typecheck
+
+      - name: Lint
+        run: pnpm --filter ./apps/server lint
+
+      - name: Integration tests
+        run: pnpm --filter ./apps/server test:integration
+
+      # The app regenerates schema.gql on boot. A diff here means the GraphQL
+      # schema changed and the committed file was not updated.
+      - name: Check schema.gql is up to date
+        run: git diff --exit-code -- apps/server/schema.gql
