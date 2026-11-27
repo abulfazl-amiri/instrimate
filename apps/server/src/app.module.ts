@@ -8,6 +8,7 @@ import { AppController } from "./app.controller.js";
 import { AppResolver } from "./app.resolver.js";
 import { PrismaModule } from "./database/prisma.module.js";
 import { AuthModule } from "./features/auth/auth.module.js";
+import { ClassesModule } from "./features/classes/classes.module.js";
 import { UsersModule } from "./features/users/users.module.js";
 
 @Module({
@@ -21,6 +22,7 @@ import { UsersModule } from "./features/users/users.module.js";
     PrismaModule,
     AuthModule,
     UsersModule,
+    ClassesModule,
   ],
   controllers: [AppController],
   providers: [AppResolver],
