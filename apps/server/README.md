@@ -56,7 +56,7 @@ service → Prisma**.
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - Docker Compose (PostgreSQL and Redis)
 
 ### Install
