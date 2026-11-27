@@ -2,35 +2,14 @@ import "reflect-metadata";
 import "dotenv/config.js";
 
 import { NestFactory } from "@nestjs/core";
-import cookieParser from "cookie-parser";
 
 import AppModule from "./app.module.js";
-import { ApiExceptionFilter } from "./common/filters/api-exception.filter.js";
-import { VersioningType } from "@nestjs/common";
+import { configureApp } from "./app.setup.js";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configuredOrigins = process.env.CORS_ORIGINS
-    ?.split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-    .map((origin) => new URL(origin).origin);
-  const allowedOrigins = [
-    "https://studio.apollographql.com",
-    "https://sandbox.embed.apollographql.com",
-    ...(configuredOrigins ?? []),
-    ...(process.env.CLIENT_URL ? [new URL(process.env.CLIENT_URL).origin] : []),
-  ];
-  app.enableCors({ origin: allowedOrigins, credentials: true });
-  app.use(cookieParser());
-  app.useGlobalFilters(new ApiExceptionFilter());
+  configureApp(app);
   app.enableShutdownHooks();
-
-  app.setGlobalPrefix("api");
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: "1",
-  });
 
   const port = process.env.PORT || 3000;
   const host = process.env.HOST || "0.0.0.0";
