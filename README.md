@@ -20,7 +20,7 @@ packages under `packages/`.
 
 ## Prerequisites
 
-- Node.js 20 or newer
+- Node.js 24 or newer
 - pnpm (the version is pinned in the root `package.json`; Corepack can use it)
 - Docker Compose
 
@@ -66,6 +66,35 @@ pnpm --filter ./apps/web dev
 
 Open [http://localhost:3001](http://localhost:3001). The home page shows
 whether it can reach the API. Other useful scripts: `build`, `typecheck`, `lint`.
+
+## Run the integration tests
+
+The server has an integration test suite in `apps/server/test`. It boots the
+real NestJS app and talks to it over HTTP and GraphQL, using real PostgreSQL
+and Redis. Emails are captured in memory, so Mailpit is not needed.
+
+With the Docker Compose services running and `apps/server/.env` set up (see
+Getting started), run from the repository root:
+
+```bash
+pnpm test:integration
+```
+
+The tests don't touch your development data:
+
+- PostgreSQL: they use a separate database named after the one in
+  `DATABASE_URL` with `_test` added (for example `instrimate_test`). It is
+  created automatically and reset at the start of every run.
+- Redis: they use database index 15 on the server from `REDIS_URL`.
+
+To point the tests somewhere else, set `TEST_DATABASE_URL` and
+`TEST_REDIS_URL`. As a safety check, the suite refuses to run unless the
+database name ends with `_test` and the Redis URL has a non-zero database
+index (for example `/15`).
+
+Use `pnpm --filter ./apps/server test:integration:watch` to rerun tests on
+save. The same checks (typecheck, lint, integration tests) run in GitHub
+Actions on every pull request to `develop` and `main`.
 
 ## View the database
 
